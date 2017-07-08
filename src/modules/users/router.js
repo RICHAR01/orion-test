@@ -8,10 +8,9 @@ export default [
     method: 'POST',
     route: '/',
     handlers: [
-      // ensureUser,
       user.createUser
     ],
-    permissions: '*'//['manager']
+    permissions: ['manager']
   },
   {
     method: 'GET',
@@ -19,7 +18,8 @@ export default [
     handlers: [
       ensureUser,
       user.getUsers
-    ]
+    ],
+    permissions: '*'
   },
   {
     method: 'GET',
@@ -27,7 +27,8 @@ export default [
     handlers: [
       ensureUser,
       user.getUser
-    ]
+    ],
+    permissions: ['admin', 'manager']
   },
   {
     method: 'PUT',
@@ -36,7 +37,8 @@ export default [
       ensureUser,
       user.getUser,
       user.updateUser
-    ]
+    ],
+    permissions: '*'
   },
   {
     method: 'DELETE',
