@@ -39,6 +39,15 @@ import User from '../../models/users'
  *     }
  */
 export async function createUser (ctx) {
+  // NOTE: Test de connector
+  const Client = ctx.app.models.client;
+
+  const clientesito = await Client.save({ title: 'title'})
+  console.log('clientesito:',clientesito);
+  ctx.body = clientesito;
+
+/*
+  User = ctx.app.models.rem
   const user = new User(ctx.request.body.user)
   try {
     await user.save()
@@ -55,6 +64,7 @@ export async function createUser (ctx) {
     user: response,
     token
   }
+*/
 }
 
 /**

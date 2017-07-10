@@ -1,0 +1,12 @@
+[
+  {
+    "name": "mongo_base",
+    "store": "mongodb",
+    "url": "mongodb://localhost:27017/orm_test"
+  },
+  {
+    "name": "mongo_working",
+    "store": "mongodb",
+    "url": "mongodb://localhost:27017/orm_working"
+  }
+]

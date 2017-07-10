@@ -12,12 +12,16 @@ import koaCors from 'koa-cors';
 import config from '../config'
 import { errorMiddleware } from '../src/middleware'
 import { ensureUser } from '../src/middleware/auth'
+import { initSources } from './connector'
 
 const app = new Koa()
 app.keys = [config.session]
 
 mongoose.Promise = global.Promise
 mongoose.connect(config.database)
+
+// Note: Con esto creamos los modelos con su respectivo datasource.
+initSources(app);
 
 app.use(koaCors(config.cors))
 app.use(convert(logger()))

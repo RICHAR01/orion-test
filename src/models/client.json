@@ -1,0 +1,13 @@
+{
+  "name": "client",
+  "datasource": "mongo_working",
+  "properties": {
+    "name": {
+      "type": "string",
+      "required": true
+    },
+    "age": {
+      "type": "number"
+    }
+  }
+}

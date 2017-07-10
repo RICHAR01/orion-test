@@ -10,13 +10,13 @@ export default [
     handlers: [
       user.createUser
     ],
-    permissions: ['manager']
+    permissions: '*' // ['admin', 'manager']
   },
   {
     method: 'GET',
     route: '/',
     handlers: [
-      ensureUser,
+      // ensureUser,
       user.getUsers
     ],
     permissions: '*'

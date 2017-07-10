@@ -1,0 +1,17 @@
+{
+  "name": "user",
+  "datasource": "mongo_base",
+  "properties": {
+    "name": {
+      "type": "string",
+      "required": true
+    },
+    "lastName": {
+      "type": "string",
+      "required": true
+    },
+    "age": {
+      "type": "number"
+    }
+  }
+}
