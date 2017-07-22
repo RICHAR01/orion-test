@@ -1,0 +1,14 @@
+{
+  "name": "kirakira",
+  "datasource": "mongo_working",
+  "properties": {
+    "namae": {
+      "type": "string",
+      "default": "mitekore"
+    },
+    "testname": {
+      "type": "string",
+      "default": "bREW"
+    }
+  }
+}

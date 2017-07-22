@@ -42,7 +42,7 @@ export async function createUser (ctx) {
   // NOTE: Test de connector
   const Client = ctx.app.models.client;
 
-  const clientesito = await Client.save({ title: 'title'})
+  const clientesito = await Client.save({ name: 'kirara'})
   console.log('clientesito:',clientesito);
   ctx.body = clientesito;
 
@@ -95,8 +95,21 @@ export async function createUser (ctx) {
  * @apiUse TokenError
  */
 export async function getUsers (ctx) {
-  const users = await User.find({}, '-password')
-  ctx.body = users;
+
+  const Client = ctx.app.models.kirakira;
+
+  // const clientesito = await Client.count()
+
+  const newKira = {
+    testname: 'bom',
+    namae: 'baiaiaiaiaia'
+  };
+
+  const clientesito = await Client.create(newKira);
+  console.log('clientesito:',clientesito);
+
+  // const users = await User.find({}, '-password')
+  ctx.body = clientesito;
 }
 
 /**

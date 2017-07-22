@@ -8,6 +8,18 @@
     },
     "age": {
       "type": "number"
+    },
+    "date": {
+      "type": "date"
+    },
+    "active": {
+      "type": "boolean"
+    },
+    "genres": {
+      "type": "array"
+    },
+    "extra": {
+      "type": "Object"
     }
   }
 }
