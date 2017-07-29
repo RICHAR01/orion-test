@@ -15,7 +15,6 @@ const _ = require('lodash');
       // } else if (spec === 'regexp') {
       //   if (cond.global)
       //     console.warn('MongoDB regex syntax does not respect the `g` flag');
-
       //   query[k] = { $regex: cond };
 
 'use strict';
@@ -188,7 +187,6 @@ class MongodbConnector {
     }
 
     return findQuery;
-
   }
 
   changeResponseObject(responseTrans) {
@@ -213,6 +211,30 @@ class MongodbConnector {
     }
 
     return response;
+  }
+
+  async includeHasMany(sources, relation, relationName, relationFilter) {
+    for (let i = 0; i < sources.length; i++) { 
+      let filter = {};
+      if (relationFilter) {
+        if (relationFilter.where) {
+          relationFilter.where[relation.foreignKey] = { inq: [ sources[i].id ] };
+        }
+        else {
+          relationFilter.where = { [relation.foreignKey]: { inq: [ sources[i].id ] } };
+        }
+        filter = relationFilter;
+      }
+      else {
+        filter = { where: { [relation.foreignKey]: { inq: [ sources[i].id ] } } };
+      }
+
+      const relatedModels = await this.models[relation.model].find(filter);
+
+      sources[i][relationName] = relatedModels;
+    };
+
+    return sources;
   }
 
   async includeBelongsTo(sources, relation, relationName, relationFilter) {
@@ -246,10 +268,7 @@ class MongodbConnector {
     return sources;
   }
 
-  async includer(results, include) {
-
-    // TODO: Foreach de arreglo de includes
-
+  async includeByType(results, include) {
     let relationName, relationFilter;
 
     if (typeof include === 'object') {
@@ -263,7 +282,7 @@ class MongodbConnector {
     const relation = this.relations[relationName];
 
     if (!relation) {
-      console.log('Relation ' + relationName + ' dosent exist.')
+      console.log('Relation ' + relationName + ' does not exist.')
       return results;
     }
 
@@ -271,13 +290,32 @@ class MongodbConnector {
       results = this.includeBelongsTo(results, relation, relationName, relationFilter);
     }
 
-    
+    if (relation.type === 'hasMany') {
+      results = this.includeHasMany(results, relation, relationName, relationFilter);
+    }
 
-    // "character": {
-    //   "type": "belongsTo",
-    //   "model": "character",
-    //   "foreignKey": "characterId"
-    // }
+    return results;
+  }
+
+  async includer(results, include) {
+    let isArray = true;
+    if (!(results instanceof Array)) {
+      isArray = false;
+      results = [results];
+    }
+
+    if (include instanceof Array) {
+      for (let i = 0; i < include.length; i++) { 
+        results = await this.includeByType(results, include[i]);
+      }
+    }
+    else {
+      results = this.includeByType(results, include);
+    }
+
+    if (!isArray) {
+      results = results[0];
+    }
 
     return results;
   }
@@ -303,14 +341,20 @@ class MongodbConnector {
   async findOne(filter) {
     const findQuery = this.buildQuery('findOne', filter);
     const results = await findQuery.lean().exec();
-    const transformedResponse = this.transformResponse(results);
+    let transformedResponse = this.transformResponse(results);
+    if (filter.include) {
+      transformedResponse = this.includer(transformedResponse, filter.include);
+    }
     return Promise.resolve(transformedResponse);
   }
 
   async findById(id, filter) {
     const findQuery = this.buildQuery('findById', filter, null, id);
     const results = await findQuery.lean().exec();
-    const transformedResponse = this.transformResponse(results);
+    let transformedResponse = this.transformResponse(results);
+    if (filter.include) {
+      transformedResponse = this.includer(transformedResponse, filter.include);
+    }
     return Promise.resolve(transformedResponse);
   }
 

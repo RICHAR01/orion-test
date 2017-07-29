@@ -1,16 +1,19 @@
 {
-  "name": "serie",
+  "name": "episode",
   "datasource": "mongodb",
   "properties": {
     "name": {
       "type": "string",
       "required": true
+    },
+    "serieId": {
+      "type": "ObjectId"
     }
   },
   "relations": {
-    "episodes": {
-      "type": "hasMany",
-      "model": "episode",
+    "serie": {
+      "type": "belongsTo",
+      "model": "serie",
       "foreignKey": "serieId"
     }
   }

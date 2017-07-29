@@ -99,7 +99,7 @@ export async function getQuotes (ctx) {
   // console.log('ctx.query:',ctx.query)
   // console.log('ctx.params:',ctx.body)
   // console.log('ctx:',ctx)
-  const Quote = ctx.app.models.quote;
+  const Quote = ctx.app.models.serie;
   const Character = ctx.app.models.character;
 
   // const quoty = {
@@ -112,21 +112,35 @@ export async function getQuotes (ctx) {
 
 
   // const quotes = await Quote.find();
-  let quotes = await Quote.find({ where: { serieId: '56dfb66cb4a5c01a0d22406b' }, 
-    include: 
+  // let quotes = await Quote.find({ where: { serieId: '56dfb66cb4a5c01a0d22406b' }, 
+  //   include: [
+  //     {
+  //       relation: 'character', 
+  //       scope: {
+  //         // fields: ['name', 'serieId'],
+  //         include: 'serie'
+  //       }
+  //     },
+  //     {
+  //       relation: 'user'  
+  //     }
+  //   ]
+  // });
+
+  let quotes = await Quote.findOne({
+    include: [
       {
-        relation: 'character', 
+        relation: 'episodes', 
         scope: {
-          fields: ['name', 'serieId'],
           include: 'serie'
         }
       }
       // {
       //   relation: 'user'  
       // }
-      
-    
+    ]
   });
+
   console.log('quotes:',quotes);
   console.log('-------------');
 
