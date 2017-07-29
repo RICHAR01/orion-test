@@ -1,17 +1,26 @@
 {
   "name": "user",
-  "datasource": "mongo_base",
+  "datasource": "mongodb",
   "properties": {
     "name": {
       "type": "string",
       "required": true
     },
-    "lastName": {
+    "username": {
       "type": "string",
       "required": true
     },
-    "age": {
-      "type": "number"
+    "email": {
+      "type": "string",
+      "required": true
+    },
+    "password": {
+      "type": "string",
+      "required": true
+    },
+    "roleId": {
+      "type": "number",
+      "required": true
     }
   }
 }

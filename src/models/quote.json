@@ -1,0 +1,37 @@
+{
+  "name": "quote",
+  "datasource": "mongodb",
+  "properties": {
+    "quote": {
+      "type": "string",
+      "required": true
+    },
+    "active": {
+      "type": "boolean"
+    },
+    "characterId": {
+      "type": "ObjectId",
+      "required": true
+    },
+    "serieId": {
+      "type": "ObjectId",
+      "required": true
+    },
+     "userId": {
+      "type": "ObjectId",
+      "required": true
+    }
+  },
+  "relations": {
+    "character": {
+      "type": "belongsTo",
+      "model": "character",
+      "foreignKey": "characterId"
+    },
+    "user": {
+      "type": "belongsTo",
+      "model": "user",
+      "foreignKey": "userId"
+    }
+  }
+}

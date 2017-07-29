@@ -1,0 +1,10 @@
+{
+  "name": "serie",
+  "datasource": "mongodb",
+  "properties": {
+    "name": {
+      "type": "string",
+      "required": true
+    }
+  }
+}

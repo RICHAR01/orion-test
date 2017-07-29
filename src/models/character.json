@@ -1,0 +1,22 @@
+{
+  "name": "character",
+  "datasource": "mongodb",
+  "properties": {
+    "name": {
+      "type": "string",
+      "required": true
+    }
+  },
+  "relations": {
+    "serie": {
+      "type": "belongsTo",
+      "model": "serie",
+      "foreignKey": "serieId"
+    },
+    "user": {
+      "type": "belongsTo",
+      "model": "user",
+      "foreignKey": "userId"
+    }
+  }
+}

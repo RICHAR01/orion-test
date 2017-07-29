@@ -1,3 +1,4 @@
+const _ = require('lodash');
 /*
 * La idea de esto es generar una interface estandar para consultas
 */
@@ -25,7 +26,8 @@ class MongodbConnector {
     console.log('schemaStandar.name:', schemaStandar.name);
     const connection = this.createConnection(datasource);
     const modelSchema = this.generateModelSchema(schemaStandar.properties);
-    this.model = connection.model(schemaStandar.name, modelSchema);
+    this.model = connection.model(schemaStandar.name, modelSchema, schemaStandar.name);
+    this.relations = schemaStandar.relations || {};
   }
 
   createConnection(datasource) {
@@ -69,6 +71,10 @@ class MongodbConnector {
         case 'object':
           propertyType = Object;
           break;
+        case 'objectid':
+          propertyType = mongoose.Schema.Types.ObjectId;
+          break;
+
         default: 
           console.log('Not supported property type');
           return;
@@ -84,58 +90,7 @@ class MongodbConnector {
 
     const modelSchema = new mongoose.Schema(mongooseSchema, { versionKey: false });
 
-    this.setTransform(modelSchema);
-
     return modelSchema;
-  }
-
-  setTransform(mongooseSchema) {
-    let transform;
-    if (mongooseSchema.options.toJSON && mongooseSchema.options.toJSON.transform) {
-      transform = mongooseSchema.options.toJSON.transform;
-    }
-
-    //Set toJSON handler
-    mongooseSchema.options.toJSON = {
-      transform(doc, ret) {
-
-        if (ret._id && typeof ret._id === 'object' && ret._id.toString) {
-          if (typeof ret.id === 'undefined') {
-            ret.id = ret._id.toString();
-          }
-          delete ret._id;
-        }
-
-        //Call custom transform if present
-        if (transform) {
-          return transform(doc, ret);
-        }
-      },
-    };
-
-
-    transform = null;
-    if (mongooseSchema.options.toObject && mongooseSchema.options.toObject.transform) {
-      transform = mongooseSchema.options.toObject.transform;
-    }
-
-    //Set toObject handler
-    mongooseSchema.options.toObject = {
-      transform(doc, ret) {
-
-        if (ret._id && typeof ret._id === 'object' && ret._id.toString) {
-          if (typeof ret.id === 'undefined') {
-            ret.id = ret._id.toString();
-          }
-          delete ret._id;
-        }
-
-        //Call custom transform if present
-        if (transform) {
-          return transform(doc, ret);
-        }
-      },
-    };
   }
 
   renameProperties(sourceObj, replaceList, destObj) {
@@ -236,6 +191,97 @@ class MongodbConnector {
 
   }
 
+  changeResponseObject(responseTrans) {
+    for (let property in responseTrans) {
+      if (responseTrans[property] instanceof mongoose.Types.ObjectId) {
+        responseTrans[property] = responseTrans[property].toString();
+        if (property === '_id') {
+          responseTrans.id = responseTrans._id;
+          delete responseTrans._id;
+        }
+      }
+    }
+    return responseTrans;
+  }
+
+  transformResponse(response) {
+    if (response instanceof Array) {
+      response.map(res => this.changeResponseObject(res));
+    }
+    else if (typeof response === 'object') {
+      response = this.changeResponseObject(response);
+    }
+
+    return response;
+  }
+
+  async includeBelongsTo(sources, relation, relationName, relationFilter) {
+    const sourceIds = sources.map(source => {
+      return source[relation.foreignKey];
+    });
+
+    let filter = {};
+    if (relationFilter) {
+      if (relationFilter.where) {
+        relationFilter.where.id = { inq: sourceIds };
+      }
+      else {
+        relationFilter.where = { id: { inq: sourceIds } };
+      }
+      filter = relationFilter;
+    }
+    else {
+      filter = { where: { id: { inq: sourceIds } } };
+    }
+
+    const relatedModels = await this.models[relation.model].find(filter);
+
+    sources.forEach((source, index) => {
+      let relatedModelIndex = _.findIndex(relatedModels, { id: source[relation.foreignKey] });
+      if (relatedModelIndex !== -1) {
+        sources[index][relationName] = relatedModels[relatedModelIndex];
+      }
+    });
+
+    return sources;
+  }
+
+  async includer(results, include) {
+
+    // TODO: Foreach de arreglo de includes
+
+    let relationName, relationFilter;
+
+    if (typeof include === 'object') {
+      relationName = include.relation;
+      relationFilter = include.scope || {};
+    }
+    else {
+      relationName = include;
+    }
+
+    const relation = this.relations[relationName];
+
+    if (!relation) {
+      console.log('Relation ' + relationName + ' dosent exist.')
+      return results;
+    }
+
+    if (relation.type === 'belongsTo') {
+      results = this.includeBelongsTo(results, relation, relationName, relationFilter);
+    }
+
+    
+
+    // "character": {
+    //   "type": "belongsTo",
+    //   "model": "character",
+    //   "foreignKey": "characterId"
+    // }
+
+    return results;
+  }
+
   // Interface methods
 
   async count(where) {
@@ -246,25 +292,33 @@ class MongodbConnector {
 
   async find(filter) {
     const findQuery = this.buildQuery('find', filter);
-    const results = await findQuery.exec();
-    return Promise.resolve(results);
+    const results = await findQuery.lean().exec();
+    let transformedResponse = this.transformResponse(results);
+    if (filter.include) {
+      transformedResponse = this.includer(transformedResponse, filter.include);
+    }
+    return Promise.resolve(transformedResponse);
   }
 
   async findOne(filter) {
     const findQuery = this.buildQuery('findOne', filter);
-    const results = await findQuery.exec();
-    return Promise.resolve(results);
+    const results = await findQuery.lean().exec();
+    const transformedResponse = this.transformResponse(results);
+    return Promise.resolve(transformedResponse);
   }
 
   async findById(id, filter) {
     const findQuery = this.buildQuery('findById', filter, null, id);
-    const results = await findQuery.exec();
-    return Promise.resolve(results);
+    const results = await findQuery.lean().exec();
+    const transformedResponse = this.transformResponse(results);
+    return Promise.resolve(transformedResponse);
   }
 
   async create(modelito) {
-    const users = await this.model.create(modelito)
-    return Promise.resolve(users);
+    const created = await this.model.create(modelito)
+    // TODO: Validar array de entrada
+    const transformedResponse = this.transformResponse(created.toObject());
+    return Promise.resolve(transformedResponse);
   }
 
   async destroyAll(where) {
@@ -285,12 +339,7 @@ class MongodbConnector {
     const response = { count: responseUpdate.n };
     return Promise.resolve(response);
   }
-
-  // // idea
-  // update(propertiesToUpdate) {
-  //   // this.model extend propertiesToUpdate
-  //   this.model.update();
-  // }
+  
 }
 
 module.exports = MongodbConnector;

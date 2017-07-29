@@ -1,12 +1,13 @@
-import User from '../models/users'
-import AccessToken from '../models/accessToken'
 import config from '../../config'
 
 export async function ensureUser (ctx, next) {
+  const User = ctx.app.models.user;
+  const AccessToken = ctx.app.models.AccessToken;
+
   const token = ctx.header.authorization;
   if (!token) return next();
 
-  const accessToken = await AccessToken.findOne({ _id: token });
+  const accessToken = await AccessToken.findOne({ where: { id: token } });
   if (!accessToken) return next();
 
   const currentDate = new Date();
@@ -15,10 +16,8 @@ export async function ensureUser (ctx, next) {
   const isTokenAlive = (currentDate.getTime() < creationDate.getTime());
   if (!isTokenAlive) return next();
 
-  let user = await User.findOne({ _id: accessToken.userId }, '-password')
+  let user = await User.findOne({ where: { id: accessToken.userId } });
   if (!user) return next();
-
-  user = user.toJSON();
 
   user.role = config.roles[user.roleId];
 

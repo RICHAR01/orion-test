@@ -1,7 +1,7 @@
-import User from '../models/users'
+// import User from '../models/users'
 import config from '../../config'
 import { getToken } from '../utils/auth'
-import { verify } from 'jsonwebtoken'
+// import { verify } from 'jsonwebtoken'
 
 export async function ensureUser (ctx, next) {
   console.log('ensureUser -----------------------');

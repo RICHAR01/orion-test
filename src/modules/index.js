@@ -22,9 +22,6 @@ exports = module.exports = function initModules (app) {
 
         const validatePermissions = async (ctx, next) => {
 
-          // Note: Authentication deshabilitada con esta linea c:
-          return next();
-
           // TODO: Agregar manejador de errores
           try {
             if (permissions === '*') return next();

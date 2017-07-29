@@ -1,10 +1,9 @@
 import { ensureUser } from '../../middleware/validators'
 import * as user from './controller'
 
-export const baseUrl = '/users'
+export const baseUrl = '/quotes'
 
 export default [
-/*
   {
     method: 'POST',
     route: '/',
@@ -17,8 +16,7 @@ export default [
     method: 'GET',
     route: '/',
     handlers: [
-      // ensureUser,
-      user.getUsers
+      user.getQuotes
     ],
     permissions: '*'
   },
@@ -50,5 +48,4 @@ export default [
       user.deleteUser
     ]
   }
-*/
 ]

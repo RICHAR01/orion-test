@@ -1,12 +1,12 @@
 [
   {
-    "name": "mongo_base",
+    "name": "mongodb",
     "store": "mongodb",
-    "url": "mongodb://localhost:27017/orm_test"
+    "url": "mongodb://localhost/test"
   },
   {
-    "name": "mongo_working",
+    "name": "mongo_example",
     "store": "mongodb",
-    "url": "mongodb://localhost:27017/orm_working"
+    "url": "mongodb://localhost/test"
   }
 ]

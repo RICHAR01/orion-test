@@ -40,6 +40,9 @@ export async function initSources (app) {
 
     });
 
+    for (let modelName in models) {
+      models[modelName].models = models;
+    }
 
     // Note: Al terminar de crear los modelos los guardamos en app
     app.models = models;

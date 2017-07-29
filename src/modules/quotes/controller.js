@@ -1,0 +1,292 @@
+// import User from '../../models/users'
+const _ = require('lodash');
+
+/**
+ * @api {post} /users Create a new user
+ * @apiPermission
+ * @apiVersion 1.0.0
+ * @apiName CreateUser
+ * @apiGroup Users
+ *
+ * @apiExample Example usage:
+ * curl -H "Content-Type: application/json" -X POST -d '{ "user": { "username": "johndoe", "password": "secretpasas" } }' localhost:5000/users
+ *
+ * @apiParam {Object} user          User object (required)
+ * @apiParam {String} user.username Username.
+ * @apiParam {String} user.password Password.
+ *
+ * @apiSuccess {Object}   users           User object
+ * @apiSuccess {ObjectId} users._id       User id
+ * @apiSuccess {String}   users.name      User name
+ * @apiSuccess {String}   users.username  User username
+ *
+ * @apiSuccessExample {json} Success-Response:
+ *     HTTP/1.1 200 OK
+ *     {
+ *       "user": {
+ *          "_id": "56bd1da600a526986cf65c80"
+ *          "name": "John Doe"
+ *          "username": "johndoe"
+ *       }
+ *     }
+ *
+ * @apiError UnprocessableEntity Missing required parameters
+ *
+ * @apiErrorExample {json} Error-Response:
+ *     HTTP/1.1 422 Unprocessable Entity
+ *     {
+ *       "status": 422,
+ *       "error": "Unprocessable Entity"
+ *     }
+ */
+export async function createUser (ctx) {
+  // NOTE: Test de connector
+  const Client = ctx.app.models.client;
+
+  const clientesito = await Client.save({ name: 'kirara'})
+  console.log('clientesito:',clientesito);
+  ctx.body = clientesito;
+
+/*
+  User = ctx.app.models.rem
+  const user = new User(ctx.request.body.user)
+  try {
+    await user.save()
+  } catch (err) {
+    ctx.throw(422, err.message)
+  }
+
+  const token = user.generateToken()
+  const response = user.toJSON()
+
+  delete response.password
+
+  ctx.body = {
+    user: response,
+    token
+  }
+*/
+}
+
+/**
+ * @api {get} /users Get all users
+ * @apiPermission user
+ * @apiVersion 1.0.0
+ * @apiName GetUsers
+ * @apiGroup Users
+ *
+ * @apiExample Example usage:
+ * curl -H "Content-Type: application/json" -X GET localhost:5000/users
+ *
+ * @apiSuccess {Object[]} users           Array of user objects
+ * @apiSuccess {ObjectId} users._id       User id
+ * @apiSuccess {String}   users.name      User name
+ * @apiSuccess {String}   users.username  User username
+ *
+ * @apiSuccessExample {json} Success-Response:
+ *     HTTP/1.1 200 OK
+ *     {
+ *       "users": [{
+ *          "_id": "56bd1da600a526986cf65c80"
+ *          "name": "John Doe"
+ *          "username": "johndoe"
+ *       }]
+ *     }
+ *
+ * @apiUse TokenError
+ */
+export async function getQuotes (ctx) {
+  // console.log('ctx.query:',ctx.query)
+  // console.log('ctx.params:',ctx.body)
+  // console.log('ctx:',ctx)
+  const Quote = ctx.app.models.quote;
+  const Character = ctx.app.models.character;
+
+  // const quoty = {
+  //   "quote": 'Como la ultima vez.',
+  //   // "active": {
+  //   "characterId": "597557725f54b2488b2d06c5",
+  //   "serieId": "56dfb66cb4a5c01a0d22406b",
+  //   "userId": "58aa042f1e6c1faba4dc3621"
+  // };
+
+
+  // const quotes = await Quote.find();
+  let quotes = await Quote.find({ where: { serieId: '56dfb66cb4a5c01a0d22406b' }, 
+    include: 
+      {
+        relation: 'character', 
+        scope: {
+          fields: ['name', 'serieId'],
+          include: 'serie'
+        }
+      }
+      // {
+      //   relation: 'user'  
+      // }
+      
+    
+  });
+  console.log('quotes:',quotes);
+  console.log('-------------');
+
+
+  // anterior include manual
+  /*
+  const characterIds = quotes.map(quot => {
+    return quot.characterId;
+  });
+
+  console.log('characterIds:',characterIds)
+
+  const wheresito = { where: { id: { inq: characterIds } } };
+
+  console.log('wheresito', wheresito)
+
+  const characters = await Character.find(wheresito);
+  console.log('characters:',characters);
+
+  characters.forEach(character => {
+    let quoteIndex = _.findIndex(quotes, { 'characterId': character.id });
+    if (quoteIndex !== -1) {
+      console.log('character:',character);
+      quotes[quoteIndex].character = character;
+    }
+  });
+
+  */
+
+  ctx.body = quotes;
+}
+
+/**
+ * @api {get} /users/:id Get user by id
+ * @apiPermission user
+ * @apiVersion 1.0.0
+ * @apiName GetUser
+ * @apiGroup Users
+ *
+ * @apiExample Example usage:
+ * curl -H "Content-Type: application/json" -X GET localhost:5000/users/56bd1da600a526986cf65c80
+ *
+ * @apiSuccess {Object}   users           User object
+ * @apiSuccess {ObjectId} users._id       User id
+ * @apiSuccess {String}   users.name      User name
+ * @apiSuccess {String}   users.username  User username
+ *
+ * @apiSuccessExample {json} Success-Response:
+ *     HTTP/1.1 200 OK
+ *     {
+ *       "user": {
+ *          "_id": "56bd1da600a526986cf65c80"
+ *          "name": "John Doe"
+ *          "username": "johndoe"
+ *       }
+ *     }
+ *
+ * @apiUse TokenError
+ */
+export async function getUser (ctx, next) {
+  try {
+    const user = await User.findById(ctx.params.id, '-password')
+    if (!user) {
+      ctx.throw(404)
+    }
+
+    ctx.body = {
+      user
+    }
+  } catch (err) {
+    if (err === 404 || err.name === 'CastError') {
+      ctx.throw(404)
+    }
+
+    ctx.throw(500)
+  }
+
+  if (next) { return next() }
+}
+
+/**
+ * @api {put} /users/:id Update a user
+ * @apiPermission
+ * @apiVersion 1.0.0
+ * @apiName UpdateUser
+ * @apiGroup Users
+ *
+ * @apiExample Example usage:
+ * curl -H "Content-Type: application/json" -X PUT -d '{ "user": { "name": "Cool new Name" } }' localhost:5000/users/56bd1da600a526986cf65c80
+ *
+ * @apiParam {Object} user          User object (required)
+ * @apiParam {String} user.name     Name.
+ * @apiParam {String} user.username Username.
+ *
+ * @apiSuccess {Object}   users           User object
+ * @apiSuccess {ObjectId} users._id       User id
+ * @apiSuccess {String}   users.name      Updated name
+ * @apiSuccess {String}   users.username  Updated username
+ *
+ * @apiSuccessExample {json} Success-Response:
+ *     HTTP/1.1 200 OK
+ *     {
+ *       "user": {
+ *          "_id": "56bd1da600a526986cf65c80"
+ *          "name": "Cool new name"
+ *          "username": "johndoe"
+ *       }
+ *     }
+ *
+ * @apiError UnprocessableEntity Missing required parameters
+ *
+ * @apiErrorExample {json} Error-Response:
+ *     HTTP/1.1 422 Unprocessable Entity
+ *     {
+ *       "status": 422,
+ *       "error": "Unprocessable Entity"
+ *     }
+ *
+ * @apiUse TokenError
+ */
+export async function updateUser (ctx) {
+  const user = ctx.body.user
+
+  Object.assign(user, ctx.request.body.user)
+
+  await user.save()
+
+  ctx.body = {
+    user
+  }
+}
+
+/**
+ * @api {delete} /users/:id Delete a user
+ * @apiPermission
+ * @apiVersion 1.0.0
+ * @apiName DeleteUser
+ * @apiGroup Users
+ *
+ * @apiExample Example usage:
+ * curl -H "Content-Type: application/json" -X DELETE localhost:5000/users/56bd1da600a526986cf65c80
+ *
+ * @apiSuccess {StatusCode} 200
+ *
+ * @apiSuccessExample {json} Success-Response:
+ *     HTTP/1.1 200 OK
+ *     {
+ *       "success": true
+ *     }
+ *
+ * @apiUse TokenError
+ */
+
+export async function deleteUser (ctx) {
+  const user = ctx.body.user
+
+  await user.remove()
+
+  ctx.status = 200
+  ctx.body = {
+    success: true
+  }
+}
