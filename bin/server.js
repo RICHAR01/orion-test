@@ -19,7 +19,7 @@ const app = new Koa()
 app.keys = [config.session]
 
 mongoose.Promise = global.Promise
-mongoose.connect(config.database)
+// mongoose.connect(config.database)
 
 // Note: Con esto creamos los modelos con su respectivo datasource.
 initSources(app);
