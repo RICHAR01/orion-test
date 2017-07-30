@@ -1,4 +1,5 @@
 const _ = require('lodash');
+// TODO: Agregar try-catch y manejador de errores.
 /*
 * La idea de esto es generar una interface estandar para consultas
 */
@@ -332,7 +333,7 @@ class MongodbConnector {
     const findQuery = this.buildQuery('find', filter);
     const results = await findQuery.lean().exec();
     let transformedResponse = this.transformResponse(results);
-    if (filter.include) {
+    if (filter && filter.include) {
       transformedResponse = this.includer(transformedResponse, filter.include);
     }
     return Promise.resolve(transformedResponse);
@@ -342,7 +343,7 @@ class MongodbConnector {
     const findQuery = this.buildQuery('findOne', filter);
     const results = await findQuery.lean().exec();
     let transformedResponse = this.transformResponse(results);
-    if (filter.include) {
+    if (filter && filter.include) {
       transformedResponse = this.includer(transformedResponse, filter.include);
     }
     return Promise.resolve(transformedResponse);
@@ -352,7 +353,7 @@ class MongodbConnector {
     const findQuery = this.buildQuery('findById', filter, null, id);
     const results = await findQuery.lean().exec();
     let transformedResponse = this.transformResponse(results);
-    if (filter.include) {
+    if (filter && filter.include) {
       transformedResponse = this.includer(transformedResponse, filter.include);
     }
     return Promise.resolve(transformedResponse);
@@ -361,6 +362,7 @@ class MongodbConnector {
   async create(modelito) {
     const created = await this.model.create(modelito)
     // TODO: Validar array de entrada
+    console.log('created:',created);
     const transformedResponse = this.transformResponse(created.toObject());
     return Promise.resolve(transformedResponse);
   }

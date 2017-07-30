@@ -13,6 +13,7 @@ import config from '../config'
 import { errorMiddleware } from '../src/middleware'
 import { ensureUser } from '../src/middleware/auth'
 import { initSources } from './connector'
+import { parseQueryParams } from '../src/middleware/parseQueryParams'
 
 const app = new Koa()
 app.keys = [config.session]
@@ -36,6 +37,7 @@ app.use(passport.initialize())
 app.use(passport.session())
 
 app.use(ensureUser)
+app.use(parseQueryParams)
 
 const modules = require('../src/modules')
 modules(app)

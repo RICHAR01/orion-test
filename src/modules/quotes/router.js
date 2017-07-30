@@ -8,9 +8,9 @@ export default [
     method: 'POST',
     route: '/',
     handlers: [
-      user.createUser
+      user.createQuote
     ],
-    permissions: '*' // ['admin', 'manager']
+    permissions: 'authenticated'
   },
   {
     method: 'GET',

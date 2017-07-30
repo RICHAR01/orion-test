@@ -39,12 +39,20 @@ const _ = require('lodash');
  *       "error": "Unprocessable Entity"
  *     }
  */
-export async function createUser (ctx) {
-  // NOTE: Test de connector
-  const Client = ctx.app.models.client;
+export async function createQuote (ctx) {
 
-  const clientesito = await Client.save({ name: 'kirara'})
+  // NOTE: Test de connector
+  const Quote = ctx.app.models.quote;
+  const Character = ctx.app.models.character;
+  const quote = ctx.request.body;
+  quote.userId = ctx.state.user.id;
+  console.log('quote:',quote);
+
+  const clientesito = await Quote.create(quote)
   console.log('clientesito:',clientesito);
+
+  const character = await Character.findOne({ where: { id: clientesito.characterId } })
+  clientesito.character = character;
   ctx.body = clientesito;
 
 /*
@@ -96,80 +104,11 @@ export async function createUser (ctx) {
  * @apiUse TokenError
  */
 export async function getQuotes (ctx) {
-  // console.log('ctx.query:',ctx.query)
-  // console.log('ctx.params:',ctx.body)
-  // console.log('ctx:',ctx)
-  const Quote = ctx.app.models.serie;
-  const Character = ctx.app.models.character;
+  const Quote = ctx.app.models.quote;
+  const filter = ctx.query.filter;
 
-  // const quoty = {
-  //   "quote": 'Como la ultima vez.',
-  //   // "active": {
-  //   "characterId": "597557725f54b2488b2d06c5",
-  //   "serieId": "56dfb66cb4a5c01a0d22406b",
-  //   "userId": "58aa042f1e6c1faba4dc3621"
-  // };
-
-
-  // const quotes = await Quote.find();
-  // let quotes = await Quote.find({ where: { serieId: '56dfb66cb4a5c01a0d22406b' }, 
-  //   include: [
-  //     {
-  //       relation: 'character', 
-  //       scope: {
-  //         // fields: ['name', 'serieId'],
-  //         include: 'serie'
-  //       }
-  //     },
-  //     {
-  //       relation: 'user'  
-  //     }
-  //   ]
-  // });
-
-  let quotes = await Quote.findOne({
-    include: [
-      {
-        relation: 'episodes', 
-        scope: {
-          include: 'serie'
-        }
-      }
-      // {
-      //   relation: 'user'  
-      // }
-    ]
-  });
-
-  console.log('quotes:',quotes);
-  console.log('-------------');
-
-
-  // anterior include manual
-  /*
-  const characterIds = quotes.map(quot => {
-    return quot.characterId;
-  });
-
-  console.log('characterIds:',characterIds)
-
-  const wheresito = { where: { id: { inq: characterIds } } };
-
-  console.log('wheresito', wheresito)
-
-  const characters = await Character.find(wheresito);
-  console.log('characters:',characters);
-
-  characters.forEach(character => {
-    let quoteIndex = _.findIndex(quotes, { 'characterId': character.id });
-    if (quoteIndex !== -1) {
-      console.log('character:',character);
-      quotes[quoteIndex].character = character;
-    }
-  });
-
-  */
-
+  const quotes = await Quote.find(filter);
+  
   ctx.body = quotes;
 }
 

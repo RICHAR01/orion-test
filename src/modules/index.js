@@ -32,6 +32,8 @@ exports = module.exports = function initModules (app) {
               throw 'error-invalid-acces';
             }
 
+            if (permissions === 'authenticated') return next();
+
             if (permissions.indexOf(user.role.name) === -1) {
               throw 'error-invalid-acces';
             }
