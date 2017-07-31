@@ -24,7 +24,6 @@ import mongoose from 'mongoose'
 class MongodbConnector {
   constructor(schemaStandar, datasource) {
     console.log('schemaStandar.name:', schemaStandar.name);
-    console.log('coneting-model-to:', datasource.url || this.generateMongoDBURL(datasource));
     const connection = this.createConnection(datasource);
     const modelSchema = this.generateModelSchema(schemaStandar.properties);
     this.model = connection.model(schemaStandar.name, modelSchema, schemaStandar.name);

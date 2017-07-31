@@ -106,7 +106,7 @@ export async function createQuote (ctx) {
 export async function getQuotes (ctx) {
   const Quote = ctx.app.models.quote;
   const filter = ctx.query.filter;
-
+  console.log('filter:',filter);
   const quotes = await Quote.find(filter);
   
   ctx.body = quotes;

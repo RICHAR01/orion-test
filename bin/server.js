@@ -1,43 +1,33 @@
 import Koa from 'koa'
 import bodyParser from 'koa-bodyparser'
-import convert from 'koa-convert'
 import logger from 'koa-logger'
+import cors from 'koa-cors';
 import mongoose from 'mongoose'
-import session from 'koa-generic-session'
-import passport from 'koa-passport'
-import mount from 'koa-mount'
-import serve from 'koa-static'
-import koaCors from 'koa-cors';
+// import mount from 'koa-mount'
+// import serve from 'koa-static'
 
 import config from '../config'
-import { errorMiddleware } from '../src/middleware'
+import { errorMiddleware } from '../src/middleware/error'
 import { ensureUser } from '../src/middleware/auth'
+import { queryParserMiddleware } from '../src/middleware/queryParser'
 import { initSources } from './connector'
-import { parseQueryParams } from '../src/middleware/parseQueryParams'
 
 const app = new Koa()
-app.keys = [config.session]
 
 mongoose.Promise = global.Promise
-// mongoose.connect(config.database)
 
 // Note: Con esto creamos los modelos con su respectivo datasource.
 initSources(app);
 
-app.use(koaCors(config.cors))
-app.use(convert(logger()))
+app.use(cors(config.cors))
+app.use(logger())
 app.use(bodyParser())
-app.use(session())
 app.use(errorMiddleware())
 
-app.use(convert(mount('/docs', serve(`${process.cwd()}/docs`))))
+// app.use(convert(mount('/docs', serve(`${process.cwd()}/docs`))))
 
-require('../config/passport')
-app.use(passport.initialize())
-app.use(passport.session())
-
+app.use(queryParserMiddleware())
 app.use(ensureUser)
-app.use(parseQueryParams)
 
 const modules = require('../src/modules')
 modules(app)
