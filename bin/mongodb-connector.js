@@ -83,7 +83,7 @@ class MongodbConnector {
       propertyRequired = schema[property].required ? true : false;
 
       mongooseSchema[property] = { type: propertyType , required: propertyRequired };
-      if (schema[property].default) {
+      if (schema[property].default !== undefined) {
         mongooseSchema[property].default = schema[property].default;
       }
     }

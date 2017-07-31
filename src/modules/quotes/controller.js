@@ -40,22 +40,21 @@ const _ = require('lodash');
  *     }
  */
 export async function createQuote (ctx) {
-
-  // NOTE: Test de connector
   const Quote = ctx.app.models.quote;
   const Character = ctx.app.models.character;
+
   const quote = ctx.request.body;
   quote.userId = ctx.state.user.id;
-  console.log('quote:',quote);
 
-  const clientesito = await Quote.create(quote)
-  console.log('clientesito:',clientesito);
+  const newQuote = await Quote.create(quote);
 
-  const character = await Character.findOne({ where: { id: clientesito.characterId } })
-  clientesito.character = character;
-  ctx.body = clientesito;
+  const character = await Character.findById(newQuote.characterId);
+  newQuote.character = character;
 
-/*
+  ctx.body = newQuote;
+
+  /*
+
   User = ctx.app.models.rem
   const user = new User(ctx.request.body.user)
   try {
@@ -73,7 +72,8 @@ export async function createQuote (ctx) {
     user: response,
     token
   }
-*/
+
+  */
 }
 
 /**
@@ -106,7 +106,7 @@ export async function createQuote (ctx) {
 export async function getQuotes (ctx) {
   const Quote = ctx.app.models.quote;
   const filter = ctx.query.filter;
-  console.log('filter:',filter);
+
   const quotes = await Quote.find(filter);
   
   ctx.body = quotes;

@@ -3,7 +3,8 @@
   "datasource": "mongodb",
   "properties": {
     "_id": {
-      "type": "string"
+      "type": "string",
+      "required": true
     },
     "ttl": {
       "type": "number",

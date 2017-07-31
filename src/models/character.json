@@ -5,6 +5,13 @@
     "name": {
       "type": "string",
       "required": true
+    },
+    "image": {
+      "type": "string"
+    },
+    "serieId": {
+      "type": "ObjectId",
+      "required": true
     }
   },
   "relations": {
@@ -12,11 +19,6 @@
       "type": "belongsTo",
       "model": "serie",
       "foreignKey": "serieId"
-    },
-    "user": {
-      "type": "belongsTo",
-      "model": "user",
-      "foreignKey": "userId"
     }
   }
 }

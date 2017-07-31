@@ -7,7 +7,9 @@
       "required": true
     },
     "active": {
-      "type": "boolean"
+      "type": "boolean",
+      "default": false,
+      "required": true
     },
     "characterId": {
       "type": "ObjectId",
@@ -27,11 +29,6 @@
       "type": "belongsTo",
       "model": "character",
       "foreignKey": "characterId"
-    },
-    "user": {
-      "type": "belongsTo",
-      "model": "user",
-      "foreignKey": "userId"
     }
   }
 }
