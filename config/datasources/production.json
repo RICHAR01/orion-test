@@ -2,6 +2,6 @@
   {
     "name": "mongodb",
     "store": "mongodb",
-    "url": "mongodb://localhost:27017/test"
+    "url": "mongodb://4dm1n4n1m3:p4ssw0rdb34t@ds145329.mlab.com:45329/anibeat"
   }
 ]
