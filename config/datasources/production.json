@@ -1,0 +1,7 @@
+[
+  {
+    "name": "mongodb",
+    "store": "mongodb",
+    "url": "mongodb://4dm1n4n1m3:p4ssw0rdb34t@ds145329.mlab.com:45329/anibeat"
+  }
+]

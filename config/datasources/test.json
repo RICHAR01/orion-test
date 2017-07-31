@@ -1,0 +1,7 @@
+[
+  {
+    "name": "mongodb",
+    "store": "mongodb",
+    "url": "mongodb://localhost:27017/test"
+  }
+]
