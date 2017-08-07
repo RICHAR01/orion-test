@@ -1,4 +1,3 @@
-// import User from '../../models/users'
 const _ = require('lodash');
 import Boom from 'boom';
 
