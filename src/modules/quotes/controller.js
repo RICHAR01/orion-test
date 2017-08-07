@@ -1,245 +1,86 @@
 // import User from '../../models/users'
 const _ = require('lodash');
+import Boom from 'boom';
 
-/**
- * @api {post} /users Create a new user
- * @apiPermission
- * @apiVersion 1.0.0
- * @apiName CreateUser
- * @apiGroup Users
- *
- * @apiExample Example usage:
- * curl -H "Content-Type: application/json" -X POST -d '{ "user": { "username": "johndoe", "password": "secretpasas" } }' localhost:5000/users
- *
- * @apiParam {Object} user          User object (required)
- * @apiParam {String} user.username Username.
- * @apiParam {String} user.password Password.
- *
- * @apiSuccess {Object}   users           User object
- * @apiSuccess {ObjectId} users._id       User id
- * @apiSuccess {String}   users.name      User name
- * @apiSuccess {String}   users.username  User username
- *
- * @apiSuccessExample {json} Success-Response:
- *     HTTP/1.1 200 OK
- *     {
- *       "user": {
- *          "_id": "56bd1da600a526986cf65c80"
- *          "name": "John Doe"
- *          "username": "johndoe"
- *       }
- *     }
- *
- * @apiError UnprocessableEntity Missing required parameters
- *
- * @apiErrorExample {json} Error-Response:
- *     HTTP/1.1 422 Unprocessable Entity
- *     {
- *       "status": 422,
- *       "error": "Unprocessable Entity"
- *     }
- */
+function to(promise,) {  
+   return promise.then(data => {
+      return {
+        data: data
+      };
+   })
+   .catch(err => { return {
+      err: err
+    };
+  });
+};
+
 export async function createQuote (ctx) {
   const Quote = ctx.app.models.quote;
   const Character = ctx.app.models.character;
-
   const quote = ctx.request.body;
   quote.userId = ctx.state.user.id;
 
-  const newQuote = await Quote.create(quote);
+  const { err, data: newQuote } = await to(Quote.create(quote));
+  if (err) throw Boom.wrap(err);
 
-  const character = await Character.findById(newQuote.characterId);
+  const { err: errCharacter, data: character } = await to(Character.findById(newQuote.characterId));
+  if (errCharacter) throw Boom.wrap(err);
+
   newQuote.character = character;
 
   ctx.body = newQuote;
-
-  /*
-
-  User = ctx.app.models.rem
-  const user = new User(ctx.request.body.user)
-  try {
-    await user.save()
-  } catch (err) {
-    ctx.throw(422, err.message)
-  }
-
-  const token = user.generateToken()
-  const response = user.toJSON()
-
-  delete response.password
-
-  ctx.body = {
-    user: response,
-    token
-  }
-
-  */
 }
 
-/**
- * @api {get} /users Get all users
- * @apiPermission user
- * @apiVersion 1.0.0
- * @apiName GetUsers
- * @apiGroup Users
- *
- * @apiExample Example usage:
- * curl -H "Content-Type: application/json" -X GET localhost:5000/users
- *
- * @apiSuccess {Object[]} users           Array of user objects
- * @apiSuccess {ObjectId} users._id       User id
- * @apiSuccess {String}   users.name      User name
- * @apiSuccess {String}   users.username  User username
- *
- * @apiSuccessExample {json} Success-Response:
- *     HTTP/1.1 200 OK
- *     {
- *       "users": [{
- *          "_id": "56bd1da600a526986cf65c80"
- *          "name": "John Doe"
- *          "username": "johndoe"
- *       }]
- *     }
- *
- * @apiUse TokenError
- */
+export async function updateQuote (ctx) {
+  const Quote = ctx.app.models.quote;
+  const quote = ctx.request.body;
+  const quoteId = ctx.params.quoteId;
+
+  const { err, data: updatedQuote } = await to(Quote.updateById(quoteId, quote));
+  if (err) throw Boom.wrap(err);
+  if (!updatedQuote) throw Boom.notFound();
+  
+  ctx.body = updatedQuote;
+}
+
 export async function getQuotes (ctx) {
   const Quote = ctx.app.models.quote;
   const filter = ctx.query.filter;
 
-  const quotes = await Quote.find(filter);
-  
+  const { err, data: quotes } = await to(Quote.find(filter));
+  if (err) throw Boom.wrap(err);
+
   ctx.body = quotes;
 }
 
-/**
- * @api {get} /users/:id Get user by id
- * @apiPermission user
- * @apiVersion 1.0.0
- * @apiName GetUser
- * @apiGroup Users
- *
- * @apiExample Example usage:
- * curl -H "Content-Type: application/json" -X GET localhost:5000/users/56bd1da600a526986cf65c80
- *
- * @apiSuccess {Object}   users           User object
- * @apiSuccess {ObjectId} users._id       User id
- * @apiSuccess {String}   users.name      User name
- * @apiSuccess {String}   users.username  User username
- *
- * @apiSuccessExample {json} Success-Response:
- *     HTTP/1.1 200 OK
- *     {
- *       "user": {
- *          "_id": "56bd1da600a526986cf65c80"
- *          "name": "John Doe"
- *          "username": "johndoe"
- *       }
- *     }
- *
- * @apiUse TokenError
- */
-export async function getUser (ctx, next) {
-  try {
-    const user = await User.findById(ctx.params.id, '-password')
-    if (!user) {
-      ctx.throw(404)
-    }
+export async function getQuotesCount (ctx) {
+  const Quote = ctx.app.models.quote;
+  const where = ctx.query.where;
 
-    ctx.body = {
-      user
-    }
-  } catch (err) {
-    if (err === 404 || err.name === 'CastError') {
-      ctx.throw(404)
-    }
-
-    ctx.throw(500)
-  }
-
-  if (next) { return next() }
+  const { err, data: count } = await to(Quote.count(where));
+  if (err) throw Boom.wrap(err);
+  
+  ctx.body = count;
 }
 
-/**
- * @api {put} /users/:id Update a user
- * @apiPermission
- * @apiVersion 1.0.0
- * @apiName UpdateUser
- * @apiGroup Users
- *
- * @apiExample Example usage:
- * curl -H "Content-Type: application/json" -X PUT -d '{ "user": { "name": "Cool new Name" } }' localhost:5000/users/56bd1da600a526986cf65c80
- *
- * @apiParam {Object} user          User object (required)
- * @apiParam {String} user.name     Name.
- * @apiParam {String} user.username Username.
- *
- * @apiSuccess {Object}   users           User object
- * @apiSuccess {ObjectId} users._id       User id
- * @apiSuccess {String}   users.name      Updated name
- * @apiSuccess {String}   users.username  Updated username
- *
- * @apiSuccessExample {json} Success-Response:
- *     HTTP/1.1 200 OK
- *     {
- *       "user": {
- *          "_id": "56bd1da600a526986cf65c80"
- *          "name": "Cool new name"
- *          "username": "johndoe"
- *       }
- *     }
- *
- * @apiError UnprocessableEntity Missing required parameters
- *
- * @apiErrorExample {json} Error-Response:
- *     HTTP/1.1 422 Unprocessable Entity
- *     {
- *       "status": 422,
- *       "error": "Unprocessable Entity"
- *     }
- *
- * @apiUse TokenError
- */
-export async function updateUser (ctx) {
-  const user = ctx.body.user
+export async function getQuote (ctx) {
+  const Quote = ctx.app.models.quote;
+  const filter = ctx.query.filter;
+  const quoteId = ctx.params.quoteId;
 
-  Object.assign(user, ctx.request.body.user)
+  const { err, data: quote } = await to(Quote.findById(quoteId, filter));
+  if (err) throw Boom.wrap(err);
+  if (!quote) throw Boom.notFound();
 
-  await user.save()
-
-  ctx.body = {
-    user
-  }
+  ctx.body = quote;
 }
 
-/**
- * @api {delete} /users/:id Delete a user
- * @apiPermission
- * @apiVersion 1.0.0
- * @apiName DeleteUser
- * @apiGroup Users
- *
- * @apiExample Example usage:
- * curl -H "Content-Type: application/json" -X DELETE localhost:5000/users/56bd1da600a526986cf65c80
- *
- * @apiSuccess {StatusCode} 200
- *
- * @apiSuccessExample {json} Success-Response:
- *     HTTP/1.1 200 OK
- *     {
- *       "success": true
- *     }
- *
- * @apiUse TokenError
- */
+export async function deleteQuote (ctx) {
+  const Quote = ctx.app.models.quote;
+  const quoteId = ctx.params.quoteId;
 
-export async function deleteUser (ctx) {
-  const user = ctx.body.user
-
-  await user.remove()
-
-  ctx.status = 200
-  ctx.body = {
-    success: true
-  }
+  const { err, data: count } = await to(Quote.destroyById(quoteId));
+  if (err) throw Boom.wrap(err);
+  
+  ctx.body = count;
 }

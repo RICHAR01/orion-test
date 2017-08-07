@@ -326,7 +326,8 @@ class MongodbConnector {
   async count(where) {
     const countQuery = this.buildQuery('count', null, where);
     const count = await countQuery.exec();
-    return Promise.resolve(count);
+    const response = { count: count };
+    return Promise.resolve(response);
   }
 
   async find(filter) {
@@ -362,7 +363,7 @@ class MongodbConnector {
   async create(modelito) {
     const created = await this.model.create(modelito)
     // TODO: Validar array de entrada
-    console.log('created:',created);
+    // console.log('created:',created);
     const transformedResponse = this.transformResponse(created.toObject());
     return Promise.resolve(transformedResponse);
   }
@@ -376,7 +377,8 @@ class MongodbConnector {
 
   async destroyById(id) {
     const deleteResponse = await this.model.findByIdAndRemove(id);
-    return Promise.resolve(deleteResponse);
+    const response = { count: 1 };
+    return Promise.resolve(response);
   }
 
   async updateAll(where, params) {
@@ -384,6 +386,12 @@ class MongodbConnector {
     const responseUpdate = await this.model.updateMany(where, params);
     const response = { count: responseUpdate.n };
     return Promise.resolve(response);
+  }
+
+  async updateById(id, params) {
+    const responseUpdate = await this.model.findByIdAndUpdate(id, params).exec();
+    // TODO: Validar esto bien
+    return Promise.resolve(params);
   }
   
 }

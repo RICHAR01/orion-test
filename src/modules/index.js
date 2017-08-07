@@ -13,7 +13,7 @@ exports = module.exports = function initModules (app) {
       const instance = new Router({ prefix: baseUrl })
 
       routes.forEach((config) => {
-        const {
+        let {
           method = '',
           route = '',
           handlers = [],
@@ -44,6 +44,20 @@ exports = module.exports = function initModules (app) {
             return ctx;
           }
         };
+
+        const manageHandlerErr = function(handler) {
+          return async function(ctx, next) {
+            try {
+              await handler(ctx, next);
+            }
+            catch (err) {
+              ctx.body = err;
+              ctx.status = (ctx.body.output && ctx.body.output.statusCode) || 500;
+            }
+          }
+        };
+
+        handlers = handlers.map(handler => manageHandlerErr(handler));
 
         handlers.unshift(validatePermissions);
         const lastHandler = handlers.pop()

@@ -1,4 +1,4 @@
-import * as user from './controller'
+import * as quote from './controller'
 
 export const baseUrl = '/quotes'
 
@@ -7,41 +7,48 @@ export default [
     method: 'POST',
     route: '/',
     handlers: [
-      user.createQuote
+      quote.createQuote
     ],
     permissions: 'authenticated'
+  },
+  {
+    method: 'PUT',
+    route: '/:quoteId',
+    handlers: [
+      quote.updateQuote
+    ],
+    permissions: ['admin', 'manager']
   },
   {
     method: 'GET',
     route: '/',
     handlers: [
-      user.getQuotes
+      quote.getQuotes
     ],
     permissions: '*'
+  },
+  {
+    method: 'GET',
+    route: '/count',
+    handlers: [
+      quote.getQuotesCount
+    ],
+    permissions: ['admin', 'manager']
+  },
+  {
+    method: 'GET',
+    route: '/:quoteId',
+    handlers: [
+      quote.getQuote
+    ],
+    permissions: '*'
+  },
+  {
+    method: 'DELETE',
+    route: '/:quoteId',
+    handlers: [
+      quote.deleteQuote
+    ],
+    permissions: ['admin', 'manager']
   }
-  // {
-  //   method: 'GET',
-  //   route: '/:id',
-  //   handlers: [
-  //     user.getUser
-  //   ],
-  //   permissions: ['admin', 'manager']
-  // },
-  // {
-  //   method: 'PUT',
-  //   route: '/:id',
-  //   handlers: [
-  //     user.getUser,
-  //     user.updateUser
-  //   ],
-  //   permissions: '*'
-  // },
-  // {
-  //   method: 'DELETE',
-  //   route: '/:id',
-  //   handlers: [
-  //     user.getUser,
-  //     user.deleteUser
-  //   ]
-  // }
 ]
