@@ -1,0 +1,19 @@
+{
+  "name": "reactionFavorite",
+  "datasource": "mongodb",
+  "properties": {
+    "reactionId": {
+      "type": "ObjectId",
+      "required": true
+    },
+    "userId": {
+      "type": "ObjectId",
+      "required": true
+    },
+    "serieId": {
+      "type": "ObjectId",
+      "required": true
+    }
+  },
+  "relations": {}
+}

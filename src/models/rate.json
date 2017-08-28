@@ -1,0 +1,19 @@
+{
+  "name": "rate",
+  "datasource": "mongodb",
+  "properties": {
+    "userId": {
+      "type": "ObjectId",
+      "required": true
+    },
+    "serieId": {
+      "type": "ObjectId",
+      "required": true
+    },
+    "rate": {
+      "type": "string",
+      "required": true
+    }
+  },
+  "relations": {}
+}
