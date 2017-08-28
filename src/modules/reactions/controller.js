@@ -27,7 +27,7 @@ export async function createReaction (ctx) {
 
   newReaction.user = {
     id: ctx.state.user.id,
-    name: ctx.state.user.username
+    username: ctx.state.user.username
   };
 
   ctx.body = newReaction;
@@ -52,7 +52,7 @@ export async function updateReaction (ctx) {
   
   updatedReaction.user = {
     id: ctx.state.user.id,
-    name: ctx.state.user.username
+    username: ctx.state.user.username
   };
 
   ctx.body = updatedReaction;
@@ -68,7 +68,7 @@ export async function getReactions (ctx) {
 
   const usersIds = reactions.map(reaction => reaction.userId);
   const usersFilter = {
-    fields: ['name'],
+    fields: ['username'],
     where: {
       id: { inq: usersIds }
     }
