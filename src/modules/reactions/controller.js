@@ -18,7 +18,14 @@ export async function createReaction (ctx) {
   const reaction = ctx.request.body;
   reaction.userId = ctx.state.user.id;
 
-  const { data: userReactions, err } = await to(Reaction.find({ where: { userId: reaction.userId } }));
+  const reactionsFilter = { 
+    where: { 
+      userId: reaction.userId,
+      serieId: reaction.serieId
+    }
+  };
+
+  const { data: userReactions, err } = await to(Reaction.find(reactionsFilter));
   if (err) throw Boom.wrap(err);
   if (userReactions.length) throw Boom.badRequest();
 
