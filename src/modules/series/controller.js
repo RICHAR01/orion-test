@@ -1,7 +1,7 @@
 const _ = require('lodash');
 import Boom from 'boom';
 
-function to(promise,) {  
+function to(promise,) {
    return promise.then(data => {
       return {
         data: data
@@ -20,14 +20,14 @@ export async function getTopInteractions (ctx) {
   const serieId = ctx.params.serieId;
 
   const reactionsFilter = {
-    limit: 6,
+    limit: 5,
     where: {
       serieId: serieId
     }
   };
 
   const quotesFilter = {
-    limit: 6,
+    limit: 5,
     where: {
       serieId: serieId
     },
@@ -59,6 +59,6 @@ export async function getTopInteractions (ctx) {
     reactions: reactions,
     quotes: quotes
   }
-  
+
   ctx.body = topInteractions;
 }
