@@ -11,8 +11,7 @@
       "required": true
     },
     "serieId": {
-      "type": "ObjectId",
-      "required": true
+      "type": "ObjectId"
     }
   },
   "relations": {}

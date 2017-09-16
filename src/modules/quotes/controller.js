@@ -1,7 +1,7 @@
 const _ = require('lodash');
 import Boom from 'boom';
 
-function to(promise,) {  
+function to(promise,) {
    return promise.then(data => {
       return {
         data: data
@@ -26,6 +26,7 @@ export async function createQuote (ctx) {
   if (errCharacter) throw Boom.wrap(err);
 
   newQuote.character = character;
+  newQuote.favorites = [];
 
   ctx.body = newQuote;
 }
@@ -35,19 +36,40 @@ export async function updateQuote (ctx) {
   const quote = ctx.request.body;
   const quoteId = ctx.params.quoteId;
 
-  const { err, data: updatedQuote } = await to(Quote.updateById(quoteId, quote));
+  const { data: updatedQuote, err } = await to(Quote.updateById(quoteId, quote));
   if (err) throw Boom.wrap(err);
   if (!updatedQuote) throw Boom.notFound();
-  
+
   ctx.body = updatedQuote;
 }
 
 export async function getQuotes (ctx) {
   const Quote = ctx.app.models.quote;
+  const User = ctx.app.models.user;
   const filter = ctx.query.filter;
 
-  const { err, data: quotes } = await to(Quote.find(filter));
+  const { data: quotes, err } = await to(Quote.find(filter));
   if (err) throw Boom.wrap(err);
+
+  // Note: If req made include of favorites relation
+  if (filter && filter.include && filter.include.indexOf('favorites') !== -1) {
+    let usersIds = [];
+    quotes.forEach(quote => {
+      const favoriteUsersIds = quote.favorites.map(favorite => favorite.userId);
+      usersIds = _.union(usersIds, favoriteUsersIds);
+    });
+
+    const usersFilter = { where: { id: { inq: usersIds } } };
+    const { data: users, err: errUser } = await to(User.find(usersFilter));
+    if (errUser) throw Boom.wrap(errUser);
+
+    quotes.forEach(quote => {
+      quote.favorites.forEach(favorite => {
+        const foundFavoriteUser = _.find(users, { id: favorite.userId });
+        if (foundFavoriteUser) favorite.user = foundFavoriteUser;
+      });
+    });
+  }
 
   ctx.body = quotes;
 }
@@ -58,7 +80,7 @@ export async function getQuotesCount (ctx) {
 
   const { err, data: count } = await to(Quote.count(where));
   if (err) throw Boom.wrap(err);
-  
+
   ctx.body = count;
 }
 
@@ -80,6 +102,6 @@ export async function deleteQuote (ctx) {
 
   const { err, data: count } = await to(Quote.destroyById(quoteId));
   if (err) throw Boom.wrap(err);
-  
+
   ctx.body = count;
 }

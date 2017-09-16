@@ -1,0 +1,2 @@
+-Al elimianr cita, eliminar favorites relacionados
+-Al eliminar reaccion, eliminar favorites relacionados
