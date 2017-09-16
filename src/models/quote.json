@@ -29,6 +29,11 @@
       "type": "belongsTo",
       "model": "character",
       "foreignKey": "characterId"
+    },
+    "favorites": {
+      "type": "hasMany",
+      "model": "quoteFavorite",
+      "foreignKey": "quoteId"
     }
   }
 }

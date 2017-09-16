@@ -23,7 +23,8 @@ export async function getTopInteractions (ctx) {
     limit: 5,
     where: {
       serieId: serieId
-    }
+    },
+    include: 'favorites'
   };
 
   const quotesFilter = {
@@ -31,13 +32,26 @@ export async function getTopInteractions (ctx) {
     where: {
       serieId: serieId
     },
-    include: 'character'
+    include: ['character', 'favorites']
   };
 
   const { data: reactions, err } = await to(Reaction.find(reactionsFilter));
   if (err) throw Boom.wrap(err);
 
-  const usersIds = reactions.map(reaction => reaction.userId);
+  const { data: quotes, err: quotesError } = await to(Quote.find(quotesFilter));
+  if (quotesError) throw Boom.wrap(err);
+
+  // Note: Get users ids
+  let usersIds = reactions.map(reaction => reaction.userId);
+  reactions.forEach(reaction => {
+    const favoriteUsersIds = reaction.favorites.map(favorite => favorite.userId);
+    usersIds = _.union(usersIds, favoriteUsersIds);
+  });
+  quotes.forEach(quote => {
+    const favoriteUsersIds = quote.favorites.map(favorite => favorite.userId);
+    usersIds = _.union(usersIds, favoriteUsersIds);
+  });
+
   const usersFilter = {
     fields: ['username'],
     where: {
@@ -47,13 +61,23 @@ export async function getTopInteractions (ctx) {
   const { data: users, err: errUser } = await to(User.find(usersFilter));
   if (errUser) throw Boom.wrap(err);
 
+  // Note: Asign users
   reactions.forEach(reaction => {
     const foundUser = _.find(users, { id: reaction.userId });
     if (foundUser) reaction.user = foundUser;
+
+    reaction.favorites.forEach(favorite => {
+      const foundFavoriteUser = _.find(users, { id: favorite.userId });
+      if (foundFavoriteUser) favorite.user = foundFavoriteUser;
+    });
   });
 
-  const { data: quotes, err: quotesError } = await to(Quote.find(quotesFilter));
-  if (quotesError) throw Boom.wrap(err);
+  quotes.forEach(quote => {
+    quote.favorites.forEach(favorite => {
+      const foundFavoriteUser = _.find(users, { id: favorite.userId });
+      if (foundFavoriteUser) favorite.user = foundFavoriteUser;
+    });
+  });
 
   const topInteractions = {
     reactions: reactions,

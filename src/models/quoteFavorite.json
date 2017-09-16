@@ -1,0 +1,19 @@
+{
+  "name": "quoteFavorite",
+  "datasource": "mongodb",
+  "properties": {
+    "quoteId": {
+      "type": "ObjectId",
+      "required": true
+    },
+    "userId": {
+      "type": "ObjectId",
+      "required": true
+    },
+    "serieId": {
+      "type": "ObjectId",
+      "required": true
+    }
+  },
+  "relations": {}
+}
