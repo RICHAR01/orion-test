@@ -35,4 +35,20 @@ export default [
     ],
     permissions: 'authenticated'
   },
+  {
+    method: 'POST',
+    route: '/series/:serieId/rate',
+    handlers: [
+      user.createSerieRate
+    ],
+    permissions: 'authenticated'
+  },
+  {
+    method: 'DELETE',
+    route: '/series/:serieId/rate',
+    handlers: [
+      user.deleteSerieRate
+    ],
+    permissions: 'authenticated'
+  },
 ]

@@ -1,5 +1,6 @@
 const _ = require('lodash');
 import Boom from 'boom';
+import * as RateHandler from '../../utils/rateHandler';
 
 function to(promise,) {
    return promise.then(data => {
@@ -109,6 +110,75 @@ export async function deleteQuoteFavorite (ctx) {
 
   const { err, data: count } = await to(QuoteFavorite.destroyAll(destroyWhere));
   if (err) throw Boom.wrap(err);
+
+  ctx.body = count;
+}
+
+export async function createSerieRate (ctx) {
+  const Rate = ctx.app.models.rate;
+  const Serie = ctx.app.models.serie;
+  const serieId = ctx.params.serieId;
+  const rate = ctx.request.body;
+  const userId = ctx.state.user.id;
+  rate.userId = ctx.state.user.id;
+  rate.serieId = serieId;
+
+  if (!rate.rate) throw Boom.badRequest();
+  const validRates = ['bad', 'meh', 'good', 'great', 'perfect'];
+  if (validRates.indexOf(rate.rate) === -1) throw Boom.badRequest('Invalid rate');
+  const rateFilter = {
+    where: {
+      serieId: { inq: [serieId] },
+      userId: { inq: [userId] }
+    }
+  };
+
+  const { data: currentRate, err } = await to(Rate.findOne(rateFilter));
+  if (err) throw Boom.wrap(err);
+  if (currentRate) {
+    await RateHandler.updateSerieRate(Serie, rate, currentRate)
+
+    const updateStatement = { rate: rate.rate };
+    const { err: errDeleteRate } = await to(Rate.updateById(currentRate.id, updateStatement));
+    if (errDeleteRate) throw Boom.wrap(errDeleteRate);
+    ctx.body = currentRate;
+    return;
+  }
+
+  await RateHandler.increseSerieRate(Serie, rate);
+
+  const { data: newRate, err: errRate } = await to(Rate.create(rate));
+  if (err) throw Boom.wrap(err);
+
+  ctx.body = newRate;
+}
+
+export async function deleteSerieRate (ctx) {
+  const Rate = ctx.app.models.rate;
+  const Serie = ctx.app.models.serie;
+  const serieId = ctx.params.serieId;
+  const userId = ctx.state.user.id;
+
+  const rateFilter = {
+    where: {
+      serieId: { inq: [serieId] },
+      userId: { inq: [userId] }
+    }
+  };
+
+  const { data: currentRate, err } = await to(Rate.findOne(rateFilter));
+  if (err) throw Boom.wrap(err);
+  if (currentRate) {
+    await RateHandler.decreseSerieRate(Serie, currentRate);
+  }
+
+  const destroyWhere = {
+    serieId: { inq: [serieId] },
+    userId: { inq: [userId] }
+  };
+
+  const { data: count, errDestroy } = await to(Rate.destroyAll(destroyWhere));
+  if (errDestroy) throw Boom.wrap(errDestroy);
 
   ctx.body = count;
 }

@@ -1,0 +1,70 @@
+{
+  "name": "serie",
+  "datasource": "mongodb",
+  "properties": {
+    "name": {
+      "type": "string",
+      "required": true
+    },
+    "synopsis": {
+      "type": "string"
+    },
+    "chaptersNumber": {
+      "type": "number"
+    },
+    "minutes": {
+      "type": "number"
+    },
+    "year": {
+      "type": "number"
+    },
+    "season": {
+      "type": "string"
+    },
+    "poster": {
+      "type": "string"
+    },
+    "backgroundImage": {
+      "type": "string"
+    },
+    "trailer": {
+      "type": "string"
+    },
+    "japaneseName": {
+      "type": "string"
+    },
+    "studioId": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string"
+    },
+    "score": {
+      "type": "number"
+    },
+    "type": {
+      "type": "string"
+    },
+    "genres": {
+      "type": "array",
+      "default": []
+    },
+    "groupId": {
+      "type": "string"
+    },
+    "createdAt": {
+      "type": "date",
+      "required": true
+    },
+    "rate": {
+      "type": "number",
+      "required": true,
+      "default": 0
+    },
+    "ratesQuantity": {
+      "type": "number",
+      "required": true,
+      "default": 0
+    }
+  }
+}
