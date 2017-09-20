@@ -1,21 +1,14 @@
 {
-  "name": "user",
+  "name": "roleMapping",
   "datasource": "mongodb",
   "properties": {
-    "name": {
+    "principalType": {
       "type": "string",
       "required": true
     },
-    "username": {
+    "principalId": {
       "type": "string",
       "required": true
-    },
-    "email": {
-      "type": "string",
-      "required": true
-    },
-    "password": {
-      "type": "string"
     },
     "roleId": {
       "type": "number",

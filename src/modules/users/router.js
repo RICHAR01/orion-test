@@ -51,4 +51,12 @@ export default [
     ],
     permissions: 'authenticated'
   },
+  {
+    method: 'POST',
+    route: '/auth/social',
+    handlers: [
+      user.loginSocial
+    ],
+    permissions: '*'
+  },
 ]

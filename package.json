@@ -28,6 +28,7 @@
   },
   "dependencies": {
     "apidoc": "^0.16.1",
+    "axios": "^0.16.2",
     "babel-core": "^6.5.1",
     "babel-polyfill": "^6.5.0",
     "babel-preset-es2015-node5": "^1.2.0",
@@ -43,7 +44,8 @@
     "koa-router": "^7.0.1",
     "koa-static": "^2.0.0",
     "lodash": "^4.17.4",
-    "mongoose": "^4.4.3"
+    "mongoose": "^4.4.3",
+    "uid2": "0.0.3"
   },
   "devDependencies": {
     "babel-eslint": "^6.0.2",

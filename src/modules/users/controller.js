@@ -1,6 +1,10 @@
 const _ = require('lodash');
+const axios = require('axios');
+const defaultTokenLength = 64;
+const twoWeeksInSeconds = 1209600;
 import Boom from 'boom';
 import * as RateHandler from '../../utils/rateHandler';
+import uid from 'uid2';
 
 function to(promise,) {
    return promise.then(data => {
@@ -181,4 +185,93 @@ export async function deleteSerieRate (ctx) {
   if (errDestroy) throw Boom.wrap(errDestroy);
 
   ctx.body = count;
+}
+
+export async function loginSocial (ctx) {
+  const User = ctx.app.models.user;
+  const RoleMapping = ctx.app.models.roleMapping;
+  const AccessToken = ctx.app.models.AccessToken;
+  const credentials = ctx.request.body;
+  const provider = credentials.provider;
+  const socialToken = credentials.token;
+
+  if (!provider || !socialToken) {
+    throw Boomb.badRequest();
+  }
+
+  // Note: Obtain user data
+  let apiResponse;
+  if (provider === 'google') {
+    const googleApiUrl = 'https://www.googleapis.com/oauth2/v1/tokeninfo?access_token=' + socialToken;
+
+    const { data: response, err: errAxios } = await to(axios.get(googleApiUrl));
+    if (errAxios) throw Boom.wrap(errAxios);
+    apiResponse = response;
+  } else if (provider === 'facebook') {
+    const facebookApiUrl = 'https://graph.facebook.com/v2.10/me?access_token=' + socialToken + '&debug=all&fields=id%2Cname%2Cemail&format=json&method=get&pretty=0&suppress_http_code=1';
+
+    const { data: response, err: errAxios } = await to(axios.get(facebookApiUrl));
+    if (errAxios) throw Boom.wrap(errAxios);
+    apiResponse = response;
+  }
+
+  const email = apiResponse.data.email;
+  const username = _.head(email.split('@'));
+
+  const usersFilter = {
+    where: {
+      or: [
+        { username: { inq: [ username ] } },
+        { email: { inq: [ email ] } }
+      ]
+    }
+  };
+
+  let { data: currentUser, err } = await to(User.findOne(usersFilter));
+  if (err) throw Boom.wrap(err);
+
+  // Note: Create user if does not exist
+  if (!currentUser) {
+    const user = {
+      email: email,
+      username: username,
+      name: username,
+      roleId: 3
+    };
+
+    const { data: newUser, err: errUser } = await to(User.create(user));
+    if (errUser) throw Boom.wrap(errUser);
+
+    const roleMap = {
+      principalType: 'USER',
+      principalId: newUser.id,
+      roleId: 3
+    };
+
+    const { data: newRoleMapping, err: errRole } = await to(RoleMapping.create(roleMap));
+    if (errRole) throw Boom.wrap(errRole);
+
+    currentUser = newUser;
+  }
+
+  // Note: Login user
+  const userLogin = currentUser;
+
+  var tokenId = uid(defaultTokenLength)
+
+  const accessToken = {
+    _id: tokenId,
+    ttl: twoWeeksInSeconds,
+    created: new Date(),
+    userId: currentUser.id
+  };
+
+  const { data: newAccessToken, err: errAccessToken } = await to(AccessToken.create(accessToken));
+  if (errAccessToken) throw Boom.wrap(errAccessToken);
+
+  currentUser.role = { name: 'user' };
+  newAccessToken.user = currentUser;
+  newAccessToken.id = newAccessToken._id;
+
+  ctx.body = newAccessToken;
 }
