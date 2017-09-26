@@ -46,7 +46,8 @@ export async function createReactionFavorite (ctx) {
 
   newReactionFavorite.user = {
     id: ctx.state.user.id,
-    username: ctx.state.user.username
+    username: ctx.state.user.username,
+    image: ctx.state.user.image
   };
 
   ctx.body = newReactionFavorite;
@@ -96,7 +97,8 @@ export async function createQuoteFavorite (ctx) {
 
   newQuoteFavorite.user = {
     id: ctx.state.user.id,
-    username: ctx.state.user.username
+    username: ctx.state.user.username,
+    image: ctx.state.user.image
   };
 
   ctx.body = newQuoteFavorite;
@@ -274,4 +276,29 @@ export async function loginSocial (ctx) {
   newAccessToken.id = newAccessToken._id;
 
   ctx.body = newAccessToken;
+}
+
+export async function updateUser (ctx) {
+  const User = ctx.app.models.user;
+  const userId = ctx.state.user.id;
+  const user = ctx.request.body;
+
+  if (userId + '' !== user.id) {
+    throw Boom.unauthorized();
+  }
+
+  const updateSentence = {
+    name: user.name || '',
+    address: user.address || '',
+    waifu: user.waifu || '',
+    description: user.description || '',
+    image: user.image || '',
+    background: user.background || '',
+    url: user.url || ''
+  };
+
+  const { err } = await to(User.updateById(userId, updateSentence));
+  if (err) throw Boom.wrap(err);
+
+  ctx.body = updateSentence;
 }

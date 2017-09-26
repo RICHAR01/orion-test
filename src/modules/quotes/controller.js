@@ -59,7 +59,10 @@ export async function getQuotes (ctx) {
       usersIds = _.union(usersIds, favoriteUsersIds);
     });
 
-    const usersFilter = { where: { id: { inq: usersIds } } };
+    const usersFilter = {
+      fields: ['username', 'image'],
+      where: { id: { inq: usersIds } }
+    };
     const { data: users, err: errUser } = await to(User.find(usersFilter));
     if (errUser) throw Boom.wrap(errUser);
 

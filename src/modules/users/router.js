@@ -59,4 +59,12 @@ export default [
     ],
     permissions: '*'
   },
+  {
+    method: 'PATCH',
+    route: '/me',
+    handlers: [
+      user.updateUser
+    ],
+    permissions: 'authenticated'
+  }
 ]

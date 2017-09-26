@@ -1,7 +1,7 @@
 const _ = require('lodash');
 import Boom from 'boom';
 
-function to(promise,) {  
+function to(promise,) {
    return promise.then(data => {
       return {
         data: data
@@ -18,8 +18,8 @@ export async function createReaction (ctx) {
   const reaction = ctx.request.body;
   reaction.userId = ctx.state.user.id;
 
-  const reactionsFilter = { 
-    where: { 
+  const reactionsFilter = {
+    where: {
       userId: reaction.userId,
       serieId: reaction.serieId
     }
@@ -34,7 +34,8 @@ export async function createReaction (ctx) {
 
   newReaction.user = {
     id: ctx.state.user.id,
-    username: ctx.state.user.username
+    username: ctx.state.user.username,
+    image: ctx.state.user.image
   };
 
   ctx.body = newReaction;
@@ -45,21 +46,22 @@ export async function updateReaction (ctx) {
   const reaction = ctx.request.body;
   const reactionId = ctx.params.reactionId;
   const userId = ctx.state.user.id;
-  
+
   const { data: userReaction, err } = await to(Reaction.findById(reactionId));
   if (err) throw Boom.wrap(err);
   if (!userReaction) throw Boom.notFound();
-  
+
   if (userReaction && (userReaction.userId !== userId)) throw Boom.badRequest('Reaction no pertenece a usuario');
 
   userReaction.reaction = reaction.reaction;
 
   const { data: updatedReaction, err: errUpdate } = await to(Reaction.updateById(reactionId, userReaction));
   if (errUpdate) throw Boom.wrap(errUpdate);
-  
+
   updatedReaction.user = {
     id: ctx.state.user.id,
-    username: ctx.state.user.username
+    username: ctx.state.user.username,
+    image: ctx.state.user.image
   };
 
   ctx.body = updatedReaction;
@@ -73,19 +75,38 @@ export async function getReactions (ctx) {
   const { data: reactions, err } = await to(Reaction.find(filter));
   if (err) throw Boom.wrap(err);
 
-  const usersIds = reactions.map(reaction => reaction.userId);
+  let usersIds = reactions.map(reaction => reaction.userId);
+
+  // Note: If req made include of favorites relation
+  if (filter && filter.include && filter.include.indexOf('favorites') !== -1) {
+    reactions.forEach(reaction => {
+      const favoriteUsersIds = reaction.favorites.map(favorite => favorite.userId);
+      usersIds = _.union(usersIds, favoriteUsersIds);
+    });
+  }
+
   const usersFilter = {
-    fields: ['username'],
+    fields: ['username', 'image'],
     where: {
       id: { inq: usersIds }
     }
   };
+
   const { data: users, err: errUser } = await to(User.find(usersFilter));
   if (errUser) throw Boom.wrap(err);
 
   reactions.forEach(reaction => {
     const foundUser = _.find(users, { id: reaction.userId });
     if (foundUser) reaction.user = foundUser;
+
+    // Note: If req made include of favorites relation
+    if (filter && filter.include && filter.include.indexOf('favorites') !== -1) {
+      reaction.favorites.forEach(favorite => {
+        const foundFavoriteUser = _.find(users, { id: favorite.userId });
+        if (foundFavoriteUser) favorite.user = foundFavoriteUser;
+      });
+    }
+
   });
 
   ctx.body = reactions;
@@ -97,7 +118,7 @@ export async function getReactionsCount (ctx) {
 
   const { data: count, err } = await to(Reaction.count(where));
   if (err) throw Boom.wrap(err);
-  
+
   ctx.body = count;
 }
 
@@ -109,11 +130,11 @@ export async function deleteReaction (ctx) {
   const { data: userReaction, err } = await to(Reaction.findById(reactionId));
   if (err) throw Boom.wrap(err);
   if (!userReaction) throw Boom.notFound();
-  
+
   if (userReaction && (userReaction.userId !== userId)) throw Boom.badRequest('Reaction no pertenece a usuario');
 
   const { data: count, err: errDelete } = await to(Reaction.destroyById(reactionId));
   if (errDelete) throw Boom.wrap(errDelete);
-  
+
   ctx.body = count;
 }

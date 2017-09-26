@@ -53,7 +53,7 @@ export async function getTopInteractions (ctx) {
   });
 
   const usersFilter = {
-    fields: ['username'],
+    fields: ['username', 'image'],
     where: {
       id: { inq: usersIds }
     }

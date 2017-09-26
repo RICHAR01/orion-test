@@ -20,6 +20,24 @@
     "roleId": {
       "type": "number",
       "required": true
+    },
+    "address": {
+      "type": "string"
+    },
+    "waifu": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "image": {
+      "type": "string"
+    },
+    "background": {
+      "type": "string"
+    },
+    "url": {
+      "type": "string"
     }
   }
 }
