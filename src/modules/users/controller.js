@@ -1,10 +1,17 @@
 const _ = require('lodash');
 const axios = require('axios');
+const shortid = require('shortid');
 const defaultTokenLength = 64;
 const twoWeeksInSeconds = 1209600;
+import moment from 'moment';
 import Boom from 'boom';
+import config from '../../../config'
 import * as RateHandler from '../../utils/rateHandler';
+import * as EmailSender from '../../utils/emailSender';
 import uid from 'uid2';
+import bcrypt from 'bcryptjs';
+const saltWorkFactor = 10;
+const maxPasswordLength = 72;
 
 function to(promise,) {
    return promise.then(data => {
@@ -301,4 +308,103 @@ export async function updateUser (ctx) {
   if (err) throw Boom.wrap(err);
 
   ctx.body = updateSentence;
+}
+
+export async function requestRecoveryPassword (ctx) {
+  const User = ctx.app.models.user;
+  const RecoveryFolio = ctx.app.models.recoveryFolio;
+  const email = ctx.request.body.email;
+
+  if (!email) {
+    throw Boom.badRequest();
+  }
+
+  const userFilter = {
+    fields: ['username', 'email'],
+    where: { email: email }
+  };
+
+  const { data: user, err } = await to(User.findOne(userFilter));
+  if (err) throw Boom.wrap(err);
+  if (!user) throw Boom.notFound('user with provided email does not exist');
+
+  const destroyWhere = {
+    userId: { inq: [user.id] }
+  };
+
+  const { err: errDestroy } = await to(RecoveryFolio.destroyAll(destroyWhere));
+  if (errDestroy) throw Boom.wrap(errDestroy);
+
+  const folio = shortid.generate();
+  const recoveryFolio = {
+    folio: folio,
+    userId: user.id,
+    expirationDate: moment().add(2, 'day')
+  }
+
+  const { data: newRecoveryFolio, err: errRecovery } = await to(RecoveryFolio.create(recoveryFolio));
+  if (errRecovery) throw Boom.wrap(errRecovery);
+
+  const emailOptions = {
+    template: 'recovery-password',
+    to: user.email,
+    subject: user.username + ', tu recuperación de contraseña!',
+    params: {
+      username: user.username,
+      folio: folio,
+      appUrl: config.paths.app
+    }
+  };
+  EmailSender.send(emailOptions);
+
+  ctx.body = { ok: true };
+}
+
+export async function recoveryPassword (ctx) {
+  const User = ctx.app.models.user;
+  const RecoveryFolio = ctx.app.models.recoveryFolio;
+  const recoveryParams = ctx.request.body;
+
+  if (!recoveryParams.folio || !recoveryParams.newPassword) {
+    throw Boom.badRequest();
+  }
+
+  const folioFilter = {
+    where: { folio: recoveryParams.folio }
+  };
+
+  const { data: recoveryFolio, err } = await to(RecoveryFolio.findOne(folioFilter));
+  if (err) throw Boom.wrap(err);
+  if (!recoveryFolio) throw Boom.notFound('provided folio does not exist');
+
+  if (moment().isAfter(moment(recoveryFolio.expirationDate))) {
+    throw Boom.conflict('provided folio has expired');
+  }
+  const newPassword = recoveryParams.newPassword;
+  if (typeof newPassword !== 'string' || newPassword.length > maxPasswordLength) {
+    throw Boom.badRequest('newPassword exceeds max length');
+  }
+
+  const salt = bcrypt.genSaltSync(saltWorkFactor);
+  const hashedPassword = bcrypt.hashSync(newPassword, salt);
+  const updateStatement = { password: hashedPassword };
+
+  const { data: count, err: errUser } = await to(User.updateById(recoveryFolio.userId, updateStatement));
+  if (errUser) throw Boom.wrap(errUser);
+
+  const userFilter = { fields: ['username', 'email'] };
+  const { data: user, err: errUserFind } = await to(User.findById(recoveryFolio.userId, userFilter));
+  if (errUserFind) throw Boom.wrap(errUserFind);
+
+  const emailOptions = {
+    template: 'recovery-password-success',
+    to: user.email,
+    subject: user.username + ', haz actualizado tu contraseña!',
+    params: {
+      username: user.username
+    }
+  };
+  EmailSender.send(emailOptions);
+
+  ctx.body = { ok: true };
 }

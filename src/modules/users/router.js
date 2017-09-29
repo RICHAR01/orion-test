@@ -66,5 +66,21 @@ export default [
       user.updateUser
     ],
     permissions: 'authenticated'
+  },
+  {
+    method: 'POST',
+    route: '/requestRecoveryPassword',
+    handlers: [
+      user.requestRecoveryPassword
+    ],
+    permissions: '*'
+  },
+  {
+    method: 'POST',
+    route: '/recoveryPassword',
+    handlers: [
+      user.recoveryPassword
+    ],
+    permissions: '*'
   }
 ]
