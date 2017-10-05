@@ -1,17 +1,6 @@
 const _ = require('lodash');
-import Boom from 'boom';
-
-function to(promise,) {
-   return promise.then(data => {
-      return {
-        data: data
-      };
-   })
-   .catch(err => { return {
-      err: err
-    };
-  });
-};
+import to from 'await-to';
+import Bang from 'bang';
 
 export async function getTopInteractions (ctx) {
   const Reaction = ctx.app.models.reaction;
@@ -36,10 +25,10 @@ export async function getTopInteractions (ctx) {
   };
 
   const { data: reactions, err } = await to(Reaction.find(reactionsFilter));
-  if (err) throw Boom.wrap(err);
+  if (err) throw Bang.wrap(err);
 
   const { data: quotes, err: quotesError } = await to(Quote.find(quotesFilter));
-  if (quotesError) throw Boom.wrap(err);
+  if (quotesError) throw Bang.wrap(err);
 
   // Note: Get users ids
   let usersIds = reactions.map(reaction => reaction.userId);
@@ -59,7 +48,7 @@ export async function getTopInteractions (ctx) {
     }
   };
   const { data: users, err: errUser } = await to(User.find(usersFilter));
-  if (errUser) throw Boom.wrap(err);
+  if (errUser) throw Bang.wrap(err);
 
   // Note: Asign users
   reactions.forEach(reaction => {

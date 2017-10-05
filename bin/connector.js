@@ -1,6 +1,6 @@
 /*
-*   Esto se encarga de crear los modelos conectados a su datasource en base a los schemas json. 
-*   Y guardarlos en app. 
+*   Esto se encarga de crear los modelos conectados a su datasource en base a los schemas json.
+*   Y guardarlos en app.
 */
 
 import glob from 'glob'
@@ -10,7 +10,7 @@ import datasources from '../config/datasources'
 
 export async function initSources (app) {
 
-  // Note: Obtener rutas de los archivos de eschemas 
+  // Note: Obtener rutas de los archivos de eschemas
   glob(`${__dirname}/../src/models/*.json`, {  }, (err, schemaRoutes) => {
     if (err) { throw err }
 

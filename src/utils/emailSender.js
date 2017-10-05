@@ -1,4 +1,4 @@
-import Boom from 'boom';
+import Bang from 'bang';
 
 const nodemailer = require('nodemailer');
 const handlebars = require('handlebars');

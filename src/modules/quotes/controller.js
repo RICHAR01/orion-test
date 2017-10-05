@@ -1,17 +1,6 @@
 const _ = require('lodash');
-import Boom from 'boom';
-
-function to(promise,) {
-   return promise.then(data => {
-      return {
-        data: data
-      };
-   })
-   .catch(err => { return {
-      err: err
-    };
-  });
-};
+import to from 'await-to';
+import Bang from 'bang';
 
 export async function createQuote (ctx) {
   const Quote = ctx.app.models.quote;
@@ -20,10 +9,10 @@ export async function createQuote (ctx) {
   quote.userId = ctx.state.user.id;
 
   const { err, data: newQuote } = await to(Quote.create(quote));
-  if (err) throw Boom.wrap(err);
+  if (err) throw Bang.wrap(err);
 
   const { err: errCharacter, data: character } = await to(Character.findById(newQuote.characterId));
-  if (errCharacter) throw Boom.wrap(err);
+  if (errCharacter) throw Bang.wrap(err);
 
   newQuote.character = character;
   newQuote.favorites = [];
@@ -37,8 +26,8 @@ export async function updateQuote (ctx) {
   const quoteId = ctx.params.quoteId;
 
   const { data: updatedQuote, err } = await to(Quote.updateById(quoteId, quote));
-  if (err) throw Boom.wrap(err);
-  if (!updatedQuote) throw Boom.notFound();
+  if (err) throw Bang.wrap(err);
+  if (!updatedQuote) throw Bang.notFound();
 
   ctx.body = updatedQuote;
 }
@@ -49,7 +38,7 @@ export async function getQuotes (ctx) {
   const filter = ctx.query.filter;
 
   const { data: quotes, err } = await to(Quote.find(filter));
-  if (err) throw Boom.wrap(err);
+  if (err) throw Bang.wrap(err);
 
   // Note: If req made include of favorites relation
   if (filter && filter.include && filter.include.indexOf('favorites') !== -1) {
@@ -64,7 +53,7 @@ export async function getQuotes (ctx) {
       where: { id: { inq: usersIds } }
     };
     const { data: users, err: errUser } = await to(User.find(usersFilter));
-    if (errUser) throw Boom.wrap(errUser);
+    if (errUser) throw Bang.wrap(errUser);
 
     quotes.forEach(quote => {
       quote.favorites.forEach(favorite => {
@@ -82,7 +71,7 @@ export async function getQuotesCount (ctx) {
   const where = ctx.query.where;
 
   const { err, data: count } = await to(Quote.count(where));
-  if (err) throw Boom.wrap(err);
+  if (err) throw Bang.wrap(err);
 
   ctx.body = count;
 }
@@ -93,8 +82,8 @@ export async function getQuote (ctx) {
   const quoteId = ctx.params.quoteId;
 
   const { err, data: quote } = await to(Quote.findById(quoteId, filter));
-  if (err) throw Boom.wrap(err);
-  if (!quote) throw Boom.notFound();
+  if (err) throw Bang.wrap(err);
+  if (!quote) throw Bang.notFound();
 
   ctx.body = quote;
 }
@@ -104,7 +93,7 @@ export async function deleteQuote (ctx) {
   const quoteId = ctx.params.quoteId;
 
   const { err, data: count } = await to(Quote.destroyById(quoteId));
-  if (err) throw Boom.wrap(err);
+  if (err) throw Bang.wrap(err);
 
   ctx.body = count;
 }

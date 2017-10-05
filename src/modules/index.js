@@ -1,6 +1,6 @@
 import glob from 'glob'
 import Router from 'koa-router'
-import Boom from 'boom';
+import Bang from 'bang';
 
 exports = module.exports = function initModules (app) {
   glob(`${__dirname}/*`, { ignore: '**/index.js' }, (err, matches) => {
@@ -36,7 +36,7 @@ exports = module.exports = function initModules (app) {
             if (permissions === 'authenticated') return next();
 
             if (permissions.indexOf(user.role.name) === -1) {
-              throw Boom.unauthorized('Invalid token');
+              throw Bang.unauthorized('Invalid token');
             }
             return next();
           } catch (err) {
