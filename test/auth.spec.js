@@ -3,7 +3,6 @@ import supertest from 'supertest'
 import { expect, should } from 'chai'
 import { cleanDb, authUser } from './utils'
 
-
 should()
 const request = supertest.agent(app.listen())
 const context = {}
