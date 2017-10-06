@@ -48,7 +48,7 @@
     "koa-static": "^2.0.0",
     "lodash": "^4.17.4",
     "moment": "^2.18.1",
-    "mongoose": "^4.4.3",
+    "mongodb-connector": "git+https://gitlab.com/yanyzx/mongodb-connector.git",
     "nodemailer": "^4.1.1",
     "shortid": "^2.2.8",
     "uid2": "0.0.3"

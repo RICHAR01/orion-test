@@ -1,9 +1,13 @@
-const _ = require('lodash');
-// TODO: Agregar try-catch y manejador de errores.
+// 'use strict';
+const mongoose = require('mongoose');
+import _ from 'lodash';
+import Bang from 'bang';
+import to from 'await-to';
 /*
 * La idea de esto es generar una interface estandar para consultas
 */
 // TODO: Agregar valor default a modelos con fn
+// TODO: Agregar sólo guardar propiedades de esquema
 // Todo: se puede hacer dinamico el id falsamente asi como esta el _id -> id
 // TODO: if (spec === 'between') {
 //       query[k] = { $gte: cond[0], $lte: cond[1] };
@@ -18,36 +22,40 @@ const _ = require('lodash');
       //     console.warn('MongoDB regex syntax does not respect the `g` flag');
       //   query[k] = { $regex: cond };
 
-'use strict';
-import mongoose from 'mongoose'
 
-class MongodbConnector {
-  constructor(schemaStandar, datasource) {
+
+const internals = {};
+
+internals.createConnection = function(datasource) {
+  return mongoose.createConnection(datasource.url || internals.generateMongoDBURL(datasource));
+}
+
+internals.generateMongoDBURL = function(options) {
+  options.hostname = (options.hostname || options.host || '127.0.0.1');
+  options.port = (options.port || 27017);
+  options.database = (options.database || options.db || 'test');
+  var username = options.username || options.user;
+  if (username && options.password) {
+    return 'mongodb://' + username + ':' + options.password + '@' + options.hostname + ':' + options.port + '/' + options.database;
+  } else {
+    return 'mongodb://' + options.hostname + ':' + options.port + '/' + options.database;
+  }
+}
+
+function createConnection(datasource) {
+  return internals.createConnection(datasource);
+}
+
+class MongodbModel {
+  constructor(schemaStandar, connection) {
     console.log('schemaStandar.name:', schemaStandar.name);
-    const connection = this.createConnection(datasource);
     const modelSchema = this.generateModelSchema(schemaStandar.properties);
     this.model = connection.model(schemaStandar.name, modelSchema, schemaStandar.name);
     this.relations = schemaStandar.relations || {};
   }
 
-  createConnection(datasource) {
-    return mongoose.createConnection(datasource.url || this.generateMongoDBURL(datasource));
-  }
-
-  generateMongoDBURL(options) {
-    options.hostname = (options.hostname || options.host || '127.0.0.1');
-    options.port = (options.port || 27017);
-    options.database = (options.database || options.db || 'test');
-    var username = options.username || options.user;
-    if (username && options.password) {
-      return 'mongodb://' + username + ':' + options.password + '@' + options.hostname + ':' + options.port + '/' + options.database;
-    } else {
-      return 'mongodb://' + options.hostname + ':' + options.port + '/' + options.database;
-    }
-  }
-
   generateModelSchema(schema) {
-    let mongooseSchema = {};
+    const mongooseSchema = {};
     let propertyType;
     let propertyRequired;
 
@@ -75,14 +83,17 @@ class MongodbConnector {
           propertyType = mongoose.Schema.Types.ObjectId;
           break;
 
-        default: 
+        default:
           console.log('Not supported property type');
           return;
       }
 
       propertyRequired = schema[property].required ? true : false;
 
-      mongooseSchema[property] = { type: propertyType , required: propertyRequired };
+      mongooseSchema[property] = {
+        type: propertyType,
+        required: propertyRequired
+      };
       if (schema[property].default !== undefined) {
         mongooseSchema[property].default = schema[property].default;
       }
@@ -97,7 +108,7 @@ class MongodbConnector {
     destObj = destObj || {};
 
     Object.keys(sourceObj).forEach((key) => {
-        
+
       if (sourceObj[key] instanceof Array) {
 
         if (replaceList[key]) {
@@ -108,7 +119,7 @@ class MongodbConnector {
           destObj[key] = [];
           this.renameProperties(sourceObj[key], replaceList, destObj[key]);
         }
-          
+
       } else if (typeof sourceObj[key] === 'object') {
         if (replaceList[key]) {
           var newName = replaceList[key];
@@ -118,7 +129,7 @@ class MongodbConnector {
           destObj[key] = {};
           this.renameProperties(sourceObj[key], replaceList, destObj[key]);
         }
-          
+
       } else {
         if (replaceList[key]) {
           var newName = replaceList[key];
@@ -129,7 +140,7 @@ class MongodbConnector {
       }
 
     });
-      
+
     return destObj;
   }
 
@@ -158,24 +169,24 @@ class MongodbConnector {
     let findQuery = this.model;
 
     switch (type) {
-      case('count'): 
+      case('count'):
         findQuery = findQuery.count(where);
         break;
-      case('find'): 
+      case('find'):
         findQuery = findQuery.find(filter ? filter.where : undefined);
         break;
-      case('findOne'):    
+      case('findOne'):
         findQuery = findQuery.findOne(filter ? filter.where : undefined);
         break;
-      case('findById'):    
+      case('findById'):
         findQuery = findQuery.findById(id);
         break;
-      default: 
+      default:
         console.log('Not supported query type');
         return;
     }
 
-    if (['find','findOne', 'findById'].indexOf(type) !== -1 
+    if (['find','findOne', 'findById'].indexOf(type) !== -1
         && filter) {
       if (filter.order && filter.order.field && filter.order.criteria) {
         const order = {}
@@ -215,7 +226,7 @@ class MongodbConnector {
   }
 
   async includeHasMany(sources, relation, relationName, relationFilter) {
-    for (let i = 0; i < sources.length; i++) { 
+    for (let i = 0; i < sources.length; i++) {
       let filter = {};
       if (relationFilter) {
         if (relationFilter.where) {
@@ -230,7 +241,8 @@ class MongodbConnector {
         filter = { where: { [relation.foreignKey]: { inq: [ sources[i].id ] } } };
       }
 
-      const relatedModels = await this.models[relation.model].find(filter);
+      const { data: relatedModels, err } = await to(this.models[relation.model].find(filter));
+      if (err) throw Bang.wrap(err);
 
       sources[i][relationName] = relatedModels;
     };
@@ -257,7 +269,8 @@ class MongodbConnector {
       filter = { where: { id: { inq: sourceIds } } };
     }
 
-    const relatedModels = await this.models[relation.model].find(filter);
+    const { data: relatedModels, err } = await to(this.models[relation.model].find(filter));
+    if (err) throw Bang.wrap(err);
 
     sources.forEach((source, index) => {
       let relatedModelIndex = _.findIndex(relatedModels, { id: source[relation.foreignKey] });
@@ -306,8 +319,13 @@ class MongodbConnector {
     }
 
     if (include instanceof Array) {
-      for (let i = 0; i < include.length; i++) { 
-        results = await this.includeByType(results, include[i]);
+      for (let i = 0; i < include.length; i++) {
+        try {
+          results = await this.includeByType(results, include[i]);
+        }
+        catch(err) {
+          throw Bang.wrap(err);
+        }
       }
     }
     else {
@@ -325,14 +343,16 @@ class MongodbConnector {
 
   async count(where) {
     const countQuery = this.buildQuery('count', null, where);
-    const count = await countQuery.exec();
+    const { data: count, err } = await to(countQuery.exec());
+    if (err) throw Bang.wrap(err);
     const response = { count: count };
     return Promise.resolve(response);
   }
 
   async find(filter) {
     const findQuery = this.buildQuery('find', filter);
-    const results = await findQuery.lean().exec();
+    const { data: results, err } = await to(findQuery.lean().exec());
+    if (err) throw Bang.wrap(err);
     let transformedResponse = this.transformResponse(results);
     if (filter && filter.include) {
       transformedResponse = this.includer(transformedResponse, filter.include);
@@ -342,7 +362,8 @@ class MongodbConnector {
 
   async findOne(filter) {
     const findQuery = this.buildQuery('findOne', filter);
-    const results = await findQuery.lean().exec();
+    const { data: results, err } = await to(findQuery.lean().exec());
+    if (err) throw Bang.wrap(err);
     let transformedResponse = this.transformResponse(results);
     if (filter && filter.include) {
       transformedResponse = this.includer(transformedResponse, filter.include);
@@ -352,7 +373,8 @@ class MongodbConnector {
 
   async findById(id, filter) {
     const findQuery = this.buildQuery('findById', filter, null, id);
-    const results = await findQuery.lean().exec();
+    const { data: results, err } = await to(findQuery.lean().exec());
+    if (err) throw Bang.wrap(err);
     let transformedResponse = this.transformResponse(results);
     if (filter && filter.include) {
       transformedResponse = this.includer(transformedResponse, filter.include);
@@ -361,7 +383,8 @@ class MongodbConnector {
   }
 
   async create(modelito) {
-    const created = await this.model.create(modelito)
+    const { data: created, err } = await to(this.model.create(modelito));
+    if (err) throw Bang.wrap(err);
     // TODO: Validar array de entrada
     // console.log('created:',created);
     const transformedResponse = this.transformResponse(created.toObject());
@@ -370,30 +393,37 @@ class MongodbConnector {
 
   async destroyAll(where) {
     where = this.transformFilter(where);
-    const deleteResponse = await this.model.deleteMany(where);
+    const { data: deleteResponse, err } = await to(this.model.deleteMany(where));
+    if (err) throw Bang.wrap(err);
     const response = { count: deleteResponse.toJSON().n };
     return Promise.resolve(response);
   }
 
   async destroyById(id) {
-    const deleteResponse = await this.model.findByIdAndRemove(id);
+    const { data: deleteResponse, err } = await to(this.model.findByIdAndRemove(id));
+    if (err) throw Bang.wrap(err);
     const response = { count: 1 };
     return Promise.resolve(response);
   }
 
   async updateAll(where, params) {
     where = this.transformFilter(where);
-    const responseUpdate = await this.model.updateMany(where, params);
+    const { data: responseUpdate, err } = await to(this.model.updateMany(where, params));
+    if (err) throw Bang.wrap(err);
     const response = { count: responseUpdate.n };
     return Promise.resolve(response);
   }
 
   async updateById(id, params) {
-    const responseUpdate = await this.model.findByIdAndUpdate(id, params).exec();
+    const { data: responseUpdate, err } = await to(this.model.findByIdAndUpdate(id, params).exec());
+    if (err) throw Bang.wrap(err);
     // TODO: Validar esto bien
     return Promise.resolve(params);
   }
-  
+
 }
 
-module.exports = MongodbConnector;
+module.exports = {
+  createConnection: createConnection,
+  model: MongodbModel
+}

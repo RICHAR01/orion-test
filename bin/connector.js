@@ -3,44 +3,45 @@
 *   Y guardarlos en app.
 */
 
-import glob from 'glob'
-import { find } from 'lodash';
-import mongodbConnector from './mongodb-connector';
-import datasources from '../config/datasources'
+import glob from 'glob';
+import _ from 'lodash';
+import mongodbConnector from 'mongodb-connector';
+import datasources from '../config/datasources';
 
 export async function initSources (app) {
 
-  // Note: Obtener rutas de los archivos de eschemas
+  // Note: Obtener rutas de los archivos de schemas
   glob(`${__dirname}/../src/models/*.json`, {  }, (err, schemaRoutes) => {
-    if (err) { throw err }
+    if (err) {
+      throw err;
+    }
 
     const models = {};
+    const datasourceNames = [];
+    const datasourceConnections = {};
+    let schemaDatasource;
 
     schemaRoutes.forEach(async (schemaRoute) => {
       const modelSchema = require(schemaRoute);
+      schemaDatasource = _.find(datasources, { 'name': modelSchema.datasource });
 
-      // TODO: Mandar conexion creada en lugar de datasource data.
+      // Note: Por cada datasource crea sólo una conexión
+      if (datasourceNames.indexOf(modelSchema.datasource) === -1) {
+        datasourceNames.push(modelSchema.datasource);
 
-      // Note: Encontrar datasource del modelSchema
-      const schemaDatasource = find(datasources, { 'name': modelSchema.datasource });
+        if (schemaDatasource.store === 'mongodb') {
+          datasourceConnections.mongodb = mongodbConnector.createConnection(schemaDatasource);
+        }
+      }
 
       // Note: Usamos el connector de mongo
       if (schemaDatasource.store === 'mongodb') {
-        models[modelSchema.name] = new mongodbConnector(modelSchema, schemaDatasource);
+        models[modelSchema.name] = new mongodbConnector.model(modelSchema, datasourceConnections.mongodb);
       }
-
-      // Note: Testeo de cada modelo recien creado
-      /*
-      const savedResponse = await models[modelSchema.name].save({ title: (new Date).getTime() });
-      console.log('savedResponse:', savedResponse);
-
-      const findResponse = await models[modelSchema.name].find();
-      console.log('findResponse:', findResponse);
-      */
 
     });
 
-    for (let modelName in models) {
+    for (const modelName in models) {
       models[modelName].models = models;
     }
 
