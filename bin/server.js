@@ -2,7 +2,6 @@ import Koa from 'koa'
 import bodyParser from 'koa-bodyparser'
 import logger from 'koa-logger'
 import cors from 'koa-cors';
-import mongoose from 'mongoose'
 // import mount from 'koa-mount'
 // import serve from 'koa-static'
 
@@ -13,8 +12,6 @@ import { queryParserMiddleware } from '../src/middleware/queryParser'
 import { initSources } from './connector'
 
 const app = new Koa()
-
-mongoose.Promise = global.Promise
 
 // Note: Con esto creamos los modelos con su respectivo datasource.
 initSources(app);

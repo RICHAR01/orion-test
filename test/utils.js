@@ -1,3 +1,5 @@
+/*
+// TODO: Remove mongoose
 import mongoose from 'mongoose'
 
 export function cleanDb () {
@@ -22,3 +24,5 @@ export function authUser (agent, callback) {
       })
     })
 }
+
+*/
