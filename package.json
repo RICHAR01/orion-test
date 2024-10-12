@@ -4,7 +4,8 @@
   "description": "Koa2 boilerplate covering essentials for APIs",
   "main": "index.js",
   "engines": {
-    "node": ">=8.1.3"
+    "node": "14.17.3",
+    "npm": "6.14.13"
   },
   "scripts": {
     "start": "node index.js",
